@@ -1,0 +1,507 @@
+<!DOCTYPE html>
+<html lang="fr" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Code de la Route Trainer</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f0f4f8;--card:#fff;--text:#1a202c;--primary:#2563eb;--ph:#1d4ed8;
+  --correct:#166534;--cbg:#dcfce7;--wrong:#991b1b;--wbg:#fee2e2;
+  --border:#e2e8f0;--muted:#64748b;--tbg:#eff6ff;--tc:#2563eb;--shadow:0 2px 8px rgba(0,0,0,.08)
+}
+[data-theme=dark]{
+  --bg:#0f172a;--card:#1e293b;--text:#f1f5f9;--primary:#60a5fa;--ph:#3b82f6;
+  --correct:#86efac;--cbg:#14532d;--wrong:#fca5a5;--wbg:#450a0a;
+  --border:#334155;--muted:#94a3b8;--tbg:#1e3a5f;--tc:#93c5fd;--shadow:0 2px 8px rgba(0,0,0,.3)
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s}
+header{background:var(--card);border-bottom:1px solid var(--border);padding:.9rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;box-shadow:var(--shadow)}
+.logo{font-size:1.2rem;font-weight:800;color:var(--primary)}
+.theme-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:.45rem .85rem;cursor:pointer;color:var(--text);font-size:.9rem;transition:all .2s}
+.theme-btn:hover{background:var(--border)}
+.container{max-width:780px;margin:0 auto;padding:2rem 1rem}
+.home-title{text-align:center;font-size:2rem;font-weight:800;margin-bottom:.4rem}
+.home-sub{text-align:center;color:var(--muted);margin-bottom:2rem;font-size:.95rem}
+.stats-bar{display:flex;justify-content:center;gap:2rem;margin-bottom:2.5rem}
+.stat-pill{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:.4rem 1rem;font-size:.85rem;color:var(--muted);font-weight:600}
+.stat-pill span{color:var(--primary)}
+.sec-label{font-size:.8rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.75rem}
+.levels-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem}
+.level-card{border:2px solid var(--border);border-radius:14px;padding:1.25rem;cursor:pointer;background:var(--card);transition:all .2s;text-align:center;box-shadow:var(--shadow)}
+.level-card:hover{border-color:var(--primary);transform:translateY(-2px)}
+.level-card.sel{border-color:var(--primary);background:var(--tbg)}
+.lv-icon{font-size:2rem;margin-bottom:.4rem}
+.lv-name{font-weight:700;font-size:1rem}
+.lv-desc{font-size:.78rem;color:var(--muted);margin-top:.2rem}
+.lv-count{font-size:.75rem;font-weight:600;color:var(--primary);margin-top:.4rem}
+.modes-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-bottom:2rem}
+.mode-card{border:2px solid var(--border);border-radius:14px;padding:1.25rem;cursor:pointer;background:var(--card);transition:all .2s;box-shadow:var(--shadow)}
+.mode-card:hover{border-color:var(--primary);transform:translateY(-2px)}
+.mode-card.sel{border-color:var(--primary);background:var(--tbg)}
+.mode-title{font-weight:700;margin-bottom:.3rem;font-size:1rem}
+.mode-desc{font-size:.82rem;color:var(--muted);line-height:1.4}
+.start-btn{width:100%;padding:1rem;background:var(--primary);color:#fff;border:none;border-radius:12px;font-size:1.1rem;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 4px 12px rgba(37,99,235,.3)}
+.start-btn:hover:not(:disabled){background:var(--ph);transform:translateY(-1px)}
+.start-btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
+/* Quiz */
+.qz-header{display:flex;align-items:center;gap:.75rem;margin-bottom:1.25rem}
+.qz-count{font-size:.85rem;color:var(--muted);font-weight:700;white-space:nowrap}
+.prog-bar{flex:1;height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.prog-fill{height:100%;background:var(--primary);border-radius:4px;transition:width .4s}
+.qz-score{font-size:.85rem;color:var(--muted);font-weight:700;white-space:nowrap}
+.q-card{background:var(--card);border-radius:16px;padding:1.75rem;border:1px solid var(--border);box-shadow:var(--shadow)}
+.q-badge{display:inline-block;background:var(--tbg);color:var(--tc);padding:.25rem .8rem;border-radius:20px;font-size:.78rem;font-weight:700;margin-bottom:1rem}
+.sign-wrap{display:flex;justify-content:center;margin-bottom:1.25rem}
+.q-text{font-size:1.05rem;font-weight:600;line-height:1.6;margin-bottom:1.5rem}
+.choices{display:grid;gap:.65rem}
+.choice-btn{width:100%;padding:.9rem 1.1rem;border:2px solid var(--border);border-radius:10px;background:var(--card);color:var(--text);font-size:.95rem;text-align:left;cursor:pointer;transition:all .2s;display:flex;align-items:center;gap:.75rem;line-height:1.4}
+.choice-btn:hover:not(:disabled){border-color:var(--primary);background:var(--tbg)}
+.choice-btn.correct{border-color:var(--correct);background:var(--cbg);color:var(--correct);font-weight:600}
+.choice-btn.wrong{border-color:var(--wrong);background:var(--wbg);color:var(--wrong)}
+.choice-btn:disabled{cursor:default}
+.c-letter{width:26px;height:26px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;flex-shrink:0;transition:all .2s}
+.choice-btn.correct .c-letter{background:var(--correct);color:#fff}
+.choice-btn.wrong .c-letter{background:var(--wrong);color:#fff}
+.expl{margin-top:1rem;padding:1rem;border-radius:10px;background:var(--tbg);border-left:4px solid var(--primary);font-size:.88rem;line-height:1.6;display:none}
+.expl.show{display:block}
+.next-btn{width:100%;padding:.85rem;background:var(--primary);color:#fff;border:none;border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:.75rem;display:none;transition:background .2s}
+.next-btn.show{display:block}
+.next-btn:hover{background:var(--ph)}
+/* Results */
+.res-card{background:var(--card);border-radius:16px;padding:2rem;text-align:center;margin-bottom:1.5rem;border:1px solid var(--border);box-shadow:var(--shadow)}
+.score-circle{width:130px;height:130px;border-radius:50%;border:8px solid;display:flex;flex-direction:column;align-items:center;justify-content:center;margin:0 auto 1.25rem}
+.score-circle.pass{border-color:#16a34a;color:#16a34a}
+.score-circle.fail{border-color:#dc2626;color:#dc2626}
+.sc-num{font-size:2.5rem;font-weight:800;line-height:1}
+.sc-tot{font-size:.85rem;color:var(--muted);margin-top:.2rem}
+.res-title{font-size:1.5rem;font-weight:800;margin-bottom:.4rem}
+.res-sub{color:var(--muted);margin-bottom:1.5rem;font-size:.9rem}
+.res-stats{display:flex;justify-content:center;gap:2.5rem}
+.rst{text-align:center}
+.rst-n{font-size:1.5rem;font-weight:700}
+.rst-l{font-size:.78rem;color:var(--muted)}
+.rst.ok .rst-n{color:#16a34a}
+.rst.ko .rst-n{color:#dc2626}
+.act-btns{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1.5rem 0}
+.act-btn{padding:.9rem;border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;transition:all .2s;border:2px solid var(--primary)}
+.act-btn.primary{background:var(--primary);color:#fff}
+.act-btn.primary:hover{background:var(--ph)}
+.act-btn.secondary{background:transparent;color:var(--primary)}
+.act-btn.secondary:hover{background:var(--tbg)}
+.review-section{margin-top:.5rem}
+.rev-title{font-size:1rem;font-weight:700;margin-bottom:1rem}
+.rev-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;margin-bottom:.65rem;text-align:left}
+.rev-item.rw{border-left:4px solid #dc2626}
+.rev-item.rc{border-left:4px solid #16a34a}
+.rev-q{font-weight:600;margin-bottom:.4rem;font-size:.9rem;line-height:1.4}
+.rev-ans{font-size:.82rem}
+.rev-correct{color:#16a34a;font-weight:600}
+.rev-wrong{color:#dc2626}
+.rev-exp{font-size:.8rem;color:var(--muted);margin-top:.35rem;font-style:italic;line-height:1.4}
+.hidden{display:none!important}
+@media(max-width:600px){
+  .levels-grid{grid-template-columns:1fr}
+  .modes-grid{grid-template-columns:1fr}
+  .act-btns{grid-template-columns:1fr}
+  .res-stats{gap:1.5rem}
+  .home-title{font-size:1.5rem}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">🚗 Code de la Route</div>
+  <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌙 Sombre</button>
+</header>
+<div class="container">
+
+  <!-- HOME -->
+  <div id="homeScreen">
+    <h1 class="home-title">Entraînement Code de la Route</h1>
+    <p class="home-sub">150 questions officielles · 3 niveaux · Mode examen & entraînement</p>
+    <div class="stats-bar">
+      <div class="stat-pill">📚 <span>150</span> questions</div>
+      <div class="stat-pill">🎯 Seuil examen <span>35/40</span></div>
+      <div class="stat-pill">🏆 <span>3</span> niveaux</div>
+    </div>
+    <div class="sec-label">Niveau</div>
+    <div class="levels-grid">
+      <div class="level-card" onclick="selectLevel('d')" id="lvl-d">
+        <div class="lv-icon">🟢</div>
+        <div class="lv-name">Débutant</div>
+        <div class="lv-desc">Panneaux, vitesses, règles de base</div>
+        <div class="lv-count">50 questions</div>
+      </div>
+      <div class="level-card" onclick="selectLevel('i')" id="lvl-i">
+        <div class="lv-icon">🟡</div>
+        <div class="lv-name">Intermédiaire</div>
+        <div class="lv-desc">Priorités, distances, conduite</div>
+        <div class="lv-count">50 questions</div>
+      </div>
+      <div class="level-card" onclick="selectLevel('e')" id="lvl-e">
+        <div class="lv-icon">🔴</div>
+        <div class="lv-name">Expert</div>
+        <div class="lv-desc">Situations complexes, règles avancées</div>
+        <div class="lv-count">50 questions</div>
+      </div>
+    </div>
+    <div class="sec-label">Mode</div>
+    <div class="modes-grid">
+      <div class="mode-card" onclick="selectMode('train')" id="mode-train">
+        <div class="mode-title">📚 Entraînement</div>
+        <div class="mode-desc">La bonne réponse s'affiche immédiatement. Idéal pour apprendre et mémoriser.</div>
+      </div>
+      <div class="mode-card" onclick="selectMode('exam')" id="mode-exam">
+        <div class="mode-title">📝 Mode Examen</div>
+        <div class="mode-desc">40 questions tirées au sort. Résultats et corrections uniquement à la fin. Seuil : 35/40.</div>
+      </div>
+    </div>
+    <button class="start-btn" id="startBtn" onclick="startQuiz()" disabled>Choisir un niveau et un mode</button>
+  </div>
+
+  <!-- QUIZ -->
+  <div id="quizScreen" class="hidden">
+    <div class="qz-header">
+      <span class="qz-count" id="qCount">1 / 40</span>
+      <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+      <span class="qz-score" id="qScore">✓ 0</span>
+    </div>
+    <div class="q-card">
+      <span class="q-badge" id="qBadge">Panneaux</span>
+      <div id="signWrap" class="sign-wrap"></div>
+      <div class="q-text" id="qText"></div>
+      <div class="choices" id="choicesWrap"></div>
+      <div class="expl" id="expl"></div>
+      <button class="next-btn" id="nextBtn" onclick="nextQ()">Question suivante →</button>
+    </div>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="resultsScreen" class="hidden">
+    <div class="res-card">
+      <div class="score-circle" id="scoreCir">
+        <div class="sc-num" id="scNum">0</div>
+        <div class="sc-tot" id="scTot">/40</div>
+      </div>
+      <div class="res-title" id="resTitle"></div>
+      <div class="res-sub" id="resSub"></div>
+      <div class="res-stats">
+        <div class="rst ok"><div class="rst-n" id="stOk">0</div><div class="rst-l">Correctes</div></div>
+        <div class="rst ko"><div class="rst-n" id="stKo">0</div><div class="rst-l">Incorrectes</div></div>
+        <div class="rst"><div class="rst-n" id="stPct">0%</div><div class="rst-l">Réussite</div></div>
+      </div>
+    </div>
+    <div class="act-btns">
+      <button class="act-btn primary" onclick="restartSame()">🔄 Recommencer</button>
+      <button class="act-btn secondary" onclick="goHome()">🏠 Accueil</button>
+    </div>
+    <div class="review-section">
+      <div class="rev-title">📋 Révision complète</div>
+      <div id="reviewWrap"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── SVG SIGNS ──────────────────────────────────────────────────────────────
+function svgSpeed(n){return`<svg width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="38" fill="white" stroke="#dc2626" stroke-width="7"/><text x="40" y="53" text-anchor="middle" font-size="${n>99?26:30}" font-weight="bold" fill="#1a202c">${n}</text></svg>`}
+const SVG={
+  stop:`<svg width="80" height="80" viewBox="0 0 80 80"><polygon points="22,4 58,4 76,22 76,58 58,76 22,76 4,58 4,22" fill="#dc2626"/><text x="40" y="47" text-anchor="middle" font-size="17" font-weight="bold" fill="white">STOP</text></svg>`,
+  giveway:`<svg width="80" height="80" viewBox="0 0 80 80"><polygon points="40,70 6,14 74,14" fill="white" stroke="#dc2626" stroke-width="7"/></svg>`,
+  noentry:`<svg width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="38" fill="#dc2626"/><rect x="10" y="33" width="60" height="14" fill="white" rx="2"/></svg>`,
+  priority:`<svg width="80" height="80" viewBox="0 0 80 80"><rect x="20" y="20" width="40" height="40" fill="#f59e0b" stroke="white" stroke-width="3" transform="rotate(45 40 40)"/></svg>`,
+  noovertake:`<svg width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="38" fill="white" stroke="#dc2626" stroke-width="7"/><rect x="18" y="36" width="44" height="8" fill="#dc2626" rx="2" transform="rotate(-45 40 40)"/><text x="28" y="48" font-size="12" fill="#1a202c">🚗🚗</text></svg>`,
+  roundabout:`<svg width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="38" fill="#2563eb"/><circle cx="40" cy="40" r="18" fill="none" stroke="white" stroke-width="5"/><text x="40" y="22" text-anchor="middle" font-size="14" fill="white">↺</text></svg>`,
+  oneway:`<svg width="80" height="80" viewBox="0 0 80 80"><rect x="4" y="24" width="72" height="32" rx="4" fill="#2563eb"/><text x="40" y="47" text-anchor="middle" font-size="28" fill="white">→</text></svg>`,
+  pedestrian:`<svg width="80" height="80" viewBox="0 0 80 80"><polygon points="40,8 76,70 4,70" fill="white" stroke="#dc2626" stroke-width="7"/><text x="40" y="62" text-anchor="middle" font-size="28">🚶</text></svg>`,
+  school:`<svg width="80" height="80" viewBox="0 0 80 80"><polygon points="40,8 76,70 4,70" fill="white" stroke="#dc2626" stroke-width="7"/><text x="40" y="62" text-anchor="middle" font-size="24">👶</text></svg>`,
+  railroad:`<svg width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="38" fill="white" stroke="#dc2626" stroke-width="7"/><text x="40" y="52" text-anchor="middle" font-size="30" font-weight="bold" fill="#dc2626">X</text></svg>`,
+  noparking:`<svg width="80" height="80" viewBox="0 0 80 80"><circle cx="40" cy="40" r="38" fill="white" stroke="#dc2626" stroke-width="7"/><text x="40" y="52" text-anchor="middle" font-size="32" font-weight="bold" fill="#dc2626">P</text><rect x="16" y="36" width="48" height="8" fill="#dc2626" rx="2" transform="rotate(-45 40 40)"/></svg>`,
+  motorway:`<svg width="80" height="80" viewBox="0 0 80 80"><rect x="4" y="4" width="72" height="72" rx="8" fill="#2563eb"/><text x="40" y="52" text-anchor="middle" font-size="28" font-weight="bold" fill="white">A</text></svg>`,
+  danger:`<svg width="80" height="80" viewBox="0 0 80 80"><polygon points="40,8 76,70 4,70" fill="white" stroke="#dc2626" stroke-width="7"/><text x="40" y="60" text-anchor="middle" font-size="30" font-weight="bold" fill="#dc2626">!</text></svg>`,
+  s50:svgSpeed(50), s70:svgSpeed(70), s80:svgSpeed(80), s90:svgSpeed(90), s110:svgSpeed(110), s130:svgSpeed(130), s30:svgSpeed(30),
+};
+
+// ── QUESTIONS ──────────────────────────────────────────────────────────────
+const DB = {
+d:[ // ── DÉBUTANT ──
+  {q:"Quelle est la vitesse maximale autorisée en agglomération ?",img:SVG.s50,choices:["30 km/h","50 km/h","70 km/h","90 km/h"],a:1,cat:"Vitesses",exp:"En agglomération, la vitesse maximale est de 50 km/h sauf panneau différent (zone 30, zone 20)."},
+  {q:"Quelle est la vitesse maximale sur autoroute par temps sec ?",img:SVG.s130,choices:["110 km/h","120 km/h","130 km/h","150 km/h"],a:2,cat:"Vitesses",exp:"Sur autoroute par temps sec et bonne visibilité, la vitesse maximale est de 130 km/h."},
+  {q:"Quelle est la vitesse maximale sur route bidirectionnelle hors agglomération (depuis 2018) ?",img:SVG.s80,choices:["70 km/h","80 km/h","90 km/h","110 km/h"],a:1,cat:"Vitesses",exp:"Depuis juillet 2018, la vitesse maximale sur les routes bidirectionnelles sans séparateur central hors agglomération est de 80 km/h."},
+  {q:"Quelle est la vitesse maximale sur autoroute par temps de pluie ?",img:SVG.s110,choices:["100 km/h","110 km/h","120 km/h","130 km/h"],a:1,cat:"Vitesses",exp:"Par temps de pluie sur autoroute, la vitesse est limitée à 110 km/h."},
+  {q:"Un conducteur novice (permis de moins de 3 ans) sur autoroute est limité à :",choices:["100 km/h","110 km/h","120 km/h","130 km/h"],a:1,cat:"Vitesses",exp:"Les conducteurs en période probatoire sont limités à 110 km/h sur autoroute (et 80 km/h hors agglo)."},
+  {q:"Ce panneau signifie :",img:SVG.stop,choices:["Ralentissez fortement","Cédez le passage","Arrêt obligatoire puis cédez le passage","Danger immédiat"],a:2,cat:"Panneaux",exp:"Le panneau STOP (octogone rouge) impose un arrêt total obligatoire, même si la voie paraît libre. Vous devez marquer l'arrêt avant la ligne blanche."},
+  {q:"Ce panneau signifie :",img:SVG.giveway,choices:["Arrêt obligatoire","Cédez le passage","Route prioritaire","Danger"],a:1,cat:"Panneaux",exp:"Le triangle inversé rouge et blanc signifie 'Cédez le passage' (priorité à droite ou voie prioritaire). Pas d'arrêt obligatoire contrairement au STOP."},
+  {q:"Ce panneau signifie :",img:SVG.noentry,choices:["Voie réservée","Sens interdit","Fin de sens interdit","Route barrée"],a:1,cat:"Panneaux",exp:"Le panneau rond rouge avec barre blanche horizontale signifie 'Sens interdit'. Vous ne pouvez pas emprunter cette voie dans ce sens."},
+  {q:"Ce panneau signifie :",img:SVG.priority,choices:["Cédez le passage","Fin de route prioritaire","Vous êtes sur une route prioritaire","Attention carrefour"],a:2,cat:"Panneaux",exp:"Le losange jaune indique que vous circulez sur une route prioritaire. Vous êtes prioritaire aux intersections non signalisées."},
+  {q:"Ce panneau signifie :",img:SVG.roundabout,choices:["Rond-point interdit","Vous approchez d'un carrefour giratoire","Voie réservée aux bus","Sens unique"],a:1,cat:"Panneaux",exp:"Ce panneau rond bleu avec flèches circulaires indique un carrefour giratoire obligatoire (rond-point). Les véhicules engagés sont prioritaires."},
+  {q:"Le port de la ceinture de sécurité est obligatoire :",choices:["Uniquement sur autoroute","Uniquement pour le conducteur","Pour tous les occupants du véhicule","Seulement à l'avant"],a:2,cat:"Sécurité",exp:"La ceinture est obligatoire pour tous les occupants, à l'avant comme à l'arrière, sur tout type de route."},
+  {q:"Peut-on utiliser son téléphone tenu en main en conduisant ?",choices:["Oui en ville seulement","Oui si on s'arrête au feu rouge","Non, c'est totalement interdit","Oui si on roule à moins de 30 km/h"],a:2,cat:"Sécurité",exp:"L'utilisation du téléphone tenu en main est interdite même à l'arrêt au feu rouge. Seul le kit mains-libres est autorisé."},
+  {q:"Quel est le taux d'alcoolémie maximal autorisé pour un conducteur confirmé (permis depuis plus de 3 ans) ?",choices:["0,2 g/L","0,5 g/L","0,8 g/L","1,0 g/L"],a:1,cat:"Alcool",exp:"Le taux légal est de 0,5 g/L de sang (ou 0,25 mg/L d'air expiré) pour les conducteurs confirmés."},
+  {q:"Quel est le taux d'alcoolémie maximal pour un conducteur novice (permis depuis moins de 3 ans) ?",choices:["0,0 g/L","0,2 g/L","0,5 g/L","0,8 g/L"],a:1,cat:"Alcool",exp:"Les conducteurs novices sont soumis à un taux très bas de 0,2 g/L de sang (quasi zéro tolérance)."},
+  {q:"À un carrefour sans signalisation, qui est prioritaire ?",choices:["Le véhicule venant de gauche","Le véhicule venant de droite","Le véhicule le plus rapide","Le véhicule circulant sur la plus grande route"],a:1,cat:"Priorités",exp:"La règle de la priorité à droite s'applique : tout véhicule arrivant par votre droite est prioritaire."},
+  {q:"Dans un carrefour giratoire (rond-point), qui est prioritaire ?",choices:["Les véhicules qui entrent","Les véhicules déjà engagés dans le rond-point","Les véhicules venant de droite","Les véhicules les plus lents"],a:1,cat:"Priorités",exp:"Dans un rond-point signalisé, les véhicules déjà engagés sont prioritaires. Les entrants doivent céder le passage."},
+  {q:"Un piéton traverse sur un passage protégé. Que devez-vous faire ?",choices:["Klaxonner pour le prévenir","Accélérer pour passer avant","Lui céder le passage en vous arrêtant si nécessaire","Continuer si vous êtes déjà engagé"],a:2,cat:"Priorités",exp:"Le piéton engagé sur un passage protégé est prioritaire. Vous devez vous arrêter et lui céder le passage."},
+  {q:"Quels documents doit obligatoirement avoir le conducteur ?",choices:["Uniquement le permis","Permis et assurance","Permis, carte grise et attestation d'assurance","Uniquement la carte grise"],a:2,cat:"Documents",exp:"Le conducteur doit avoir sur lui : son permis de conduire, la carte grise du véhicule et l'attestation d'assurance."},
+  {q:"Le gilet de sécurité réfléchissant doit se trouver :",choices:["Dans le coffre","Dans la boîte à gants","À portée de main depuis l'habitacle (pas dans le coffre)","Sur la plage arrière"],a:2,cat:"Sécurité",exp:"Le gilet doit être accessible depuis l'habitacle pour pouvoir être enfilé AVANT de sortir du véhicule. S'il est dans le coffre, vous devriez sortir pour l'enfiler, ce qui est dangereux."},
+  {q:"Le triangle de présignalisation doit être posé à quelle distance minimum derrière un véhicule en panne ?",choices:["10 m","20 m","30 m","50 m"],a:2,cat:"Sécurité",exp:"Le triangle doit être placé à au moins 30 mètres en amont du véhicule immobilisé pour prévenir les autres conducteurs à temps."},
+  {q:"Combien de points possède le permis de conduire à l'obtention ?",choices:["3 points","6 points","9 points","12 points"],a:1,cat:"Permis",exp:"À l'obtention du permis, le conducteur dispose de 6 points (période probatoire). Il peut atteindre 12 points progressivement en 3 ans sans infraction."},
+  {q:"Quelle est la distance latérale minimale pour doubler un cycliste en agglomération ?",choices:["0,5 m","1 m","1,5 m","2 m"],a:1,cat:"Comportement",exp:"En agglomération, la distance minimale pour dépasser un cycliste est de 1 mètre. Hors agglomération, elle est de 1,5 mètre."},
+  {q:"Une ligne blanche continue au centre de la chaussée signifie :",choices:["Dépassement possible si voie libre","Dépassement interdit","Voie réservée aux véhicules lents","Fin de voie"],a:1,cat:"Signalisation",exp:"Une ligne blanche continue (axiale) signifie que le dépassement est formellement interdit. Vous ne devez pas franchir cette ligne."},
+  {q:"À quelle distance minimum doit-on allumer les feux de croisement face à un véhicule venant en sens inverse (passage des feux de route) ?",choices:["50 m","100 m","150 m","200 m"],a:2,cat:"Éclairage",exp:"Vous devez passer des feux de route aux feux de croisement à au moins 150 mètres d'un véhicule venant en sens inverse pour ne pas l'éblouir."},
+  {q:"Quand doit-on utiliser les feux antibrouillard arrière ?",choices:["Dès qu'il pleut","Uniquement la nuit","Quand la visibilité est inférieure à 50 mètres","En permanence en hiver"],a:2,cat:"Éclairage",exp:"Les feux antibrouillard arrière ne s'utilisent que lorsque la visibilité est inférieure à 50 mètres (brouillard dense, neige épaisse). Les utiliser par temps clair est interdit."},
+  {q:"Un feu rouge clignotant impose :",choices:["De ralentir","Un arrêt absolu obligatoire","De passer prudemment","De vérifier et passer si libre"],a:1,cat:"Signalisation",exp:"Un feu rouge clignotant (passage à niveau, carrefour dangereux) impose un arrêt absolu. Différent du feu rouge fixe devant lequel vous pouvez tout de même marquer l'arrêt."},
+  {q:"Peut-on stationner sur un trottoir ?",choices:["Oui si on laisse 1,5 m de passage","Oui la nuit","Oui avec les feux de détresse","Non, c'est interdit"],a:3,cat:"Stationnement",exp:"Le stationnement sur les trottoirs est interdit. Les trottoirs sont réservés aux piétons."},
+  {q:"Ce panneau indique :",img:SVG.pedestrian,choices:["Passage interdit aux piétons","Attention — passage de piétons","Voie réservée aux piétons","Traversée scolaire"],a:1,cat:"Panneaux",exp:"Ce triangle rouge avec silhouette de piéton est un panneau de danger signalant un passage de piétons. Ralentissez et soyez vigilant."},
+  {q:"La signalisation temporaire de chantier (panneaux oranges) est :",choices:["Indicative seulement","Prioritaire sur la signalisation permanente","Moins importante que les feux","Optionnelle si on connaît la route"],a:1,cat:"Signalisation",exp:"La signalisation temporaire (travaux) prévaut sur la signalisation permanente. Vous devez respecter les limitations de vitesse des zones de travaux."},
+  {q:"Sur autoroute, vous devez normalement circuler :",choices:["Sur la voie du milieu","Sur la voie de gauche","Sur la voie de droite","Sur n'importe quelle voie"],a:2,cat:"Autoroute",exp:"Sur autoroute, vous devez circuler sur la voie de droite et n'utiliser les voies de gauche que pour dépasser."},
+  {q:"Ce panneau indique :",img:SVG.school,choices:["Zone 30","Passage de piétons","Attention — enfants (école ou terrain de jeux)","Garderie"],a:2,cat:"Panneaux",exp:"Ce triangle rouge avec silhouette d'enfants signale une école ou un terrain de jeux à proximité. Redoublez de vigilance et réduisez votre vitesse."},
+  {q:"Quel est le taux maximal de THC (cannabis) dans le sang autorisé pour conduire ?",choices:["0 ng/mL","1 ng/mL","2 ng/mL","5 ng/mL"],a:0,cat:"Drogues",exp:"Toute trace de stupéfiants dans le sang est interdite pour conduire. Il n'y a aucun seuil de tolérance pour le cannabis ou tout autre drogue."},
+  {q:"Pour un enfant de moins de 10 ans, quel siège auto utiliser ?",choices:["Aucun si l'enfant mesure plus d'1 m","Un siège homologué adapté à son poids/taille","La ceinture adulte suffit","Un siège uniquement à l'arrière de moins de 2 ans"],a:1,cat:"Sécurité",exp:"Tout enfant de moins de 10 ans doit être dans un dispositif de retenue homologué adapté à son gabarit (siège bébé, siège enfant, réhausseur)."},
+  {q:"Qu'est-ce que le stationnement gênant ?",choices:["Stationner plus d'1 heure","Stationner sur un trottoir","Stationner en réduisant la circulation ou gênant les piétons","Stationner sans ticket"],a:2,cat:"Stationnement",exp:"Le stationnement gênant est celui qui réduit la largeur de la voie de circulation ou gêne les piétons sur le trottoir. Il est sanctionné d'une amende."},
+  {q:"À quelle vitesse minimale est-il interdit de rouler sur la voie gauche d'autoroute par bonne visibilité ?",choices:["60 km/h","70 km/h","80 km/h","Il n'y a pas de minimum"],a:2,cat:"Autoroute",exp:"Rouler à moins de 80 km/h sur la voie de gauche d'autoroute en bonne visibilité est considéré comme une vitesse anormalement réduite, dangereuse pour la circulation."},
+  {q:"Ce panneau indique :",img:SVG.oneway,choices:["Voie à double sens","Sens unique","Fin de sens unique","Autoroute"],a:1,cat:"Panneaux",exp:"Ce panneau rectangulaire bleu avec flèche blanche signifie 'Sens unique'. La circulation se fait dans le sens indiqué uniquement."},
+  {q:"En cas d'accident avec dommages matériels uniquement, il faut :",choices:["Appeler le 15","Remplir un constat amiable","Appeler la police obligatoirement","Partir sans rien faire si c'est votre faute"],a:1,cat:"Accidents",exp:"En cas d'accident matériel (pas de blessé), remplissez un constat amiable avec l'autre conducteur. Appelez la police uniquement en cas de désaccord ou si l'autre conducteur est parti."},
+  {q:"Les feux de détresse (warnings) doivent être utilisés :",choices:["Quand on se gare en double file","En cas de panne ou de danger immédiat","Quand on cherche une adresse","Pour signaler qu'on s'arrête en livraison"],a:1,cat:"Éclairage",exp:"Les feux de détresse signalent un danger immédiat ou une panne. Ils ne justifient pas un stationnement interdit."},
+  {q:"Quel est le délai maximum pour déclarer un accident à son assurance ?",choices:["24 heures","5 jours ouvrés","10 jours","1 mois"],a:1,cat:"Assurance",exp:"Vous avez 5 jours ouvrés pour déclarer un accident à votre assurance (par lettre recommandée ou via l'espace client). Ce délai est imposé par le contrat."},
+  {q:"Le contrôle technique automobile est obligatoire tous les :",choices:["1 an","2 ans","3 ans","4 ans"],a:1,cat:"Véhicule",exp:"Le contrôle technique est obligatoire tous les 2 ans pour les véhicules de plus de 4 ans. Le premier contrôle a lieu dans les 6 mois avant le 4e anniversaire du véhicule."},
+  {q:"Ce panneau signifie :",img:SVG.railroad,choices:["Fin de priorité","Passage à niveau","Intersection dangereuse","Carrefour en X"],a:1,cat:"Panneaux",exp:"Ce panneau circulaire avec croix rouge signifie passage à niveau. Il est accompagné d'une croix de Saint-André. Ralentissez et vérifiez."},
+  {q:"Que signifie une ligne blanche discontinue (tirets) au centre de la route ?",choices:["Dépassement interdit","Dépassement autorisé si conditions sûres","Voie réservée aux véhicules lourds","Fin de route prioritaire"],a:1,cat:"Signalisation",exp:"Une ligne discontinue au centre signifie que vous pouvez franchir la ligne pour dépasser si les conditions de visibilité et de sécurité le permettent."},
+  {q:"Sur autoroute, la bande d'arrêt d'urgence (BAU) est réservée à :",choices:["Stationner en cas de fatigue","Les véhicules d'urgence et les pannes","S'arrêter pour téléphoner","Dépasser sur la droite"],a:1,cat:"Autoroute",exp:"La BAU n'est accessible qu'en cas de panne ou d'urgence absolue, et aux véhicules de secours. La circuler ou s'y arrêter sans raison valable est une infraction grave."},
+  {q:"Ce panneau signifie :",img:SVG.danger,choices:["Danger non spécifié","Fin de priorité","Passage de chevaux","Débouché dangereux"],a:0,cat:"Panneaux",exp:"Ce triangle rouge avec point d'exclamation est un panneau de danger général non spécifié. Il annonce un danger particulier indiqué sur un panneau complémentaire."},
+  {q:"Quelle est la règle concernant les phares la nuit en ville (agglomération éclairée) ?",choices:["Feux de route obligatoires","Feux de croisement obligatoires","Veilleuses suffisent","On peut rouler sans feux"],a:1,cat:"Éclairage",exp:"En agglomération la nuit, les feux de croisement sont obligatoires. Les feux de route sont généralement interdits en ville (éblouissement)."},
+  {q:"Peut-on dépasser par la droite ?",choices:["Oui si c'est sûr","Oui sur autoroute","Non, sauf si le véhicule tourne à gauche et qu'il y a assez de place","Non, jamais"],a:2,cat:"Comportement",exp:"Le dépassement par la droite est interdit sauf exception : le véhicule devant tourne à gauche et l'espace à droite est suffisant, ou en cas de file de véhicules avançant lentement."},
+  {q:"Quelle est la sanction pour conduite sous l'influence de stupéfiants ?",choices:["Simple amende","2 ans d'emprisonnement et 4 500 € d'amende","Suspension immédiate 1 mois","Avertissement"],a:1,cat:"Drogues",exp:"Conduire sous l'emprise de stupéfiants est un délit : 2 ans de prison, 4 500 € d'amende, perte de 6 points, suspension ou annulation du permis."},
+  {q:"La distance de freinage à 50 km/h est approximativement :",choices:["10 m","14 m","25 m","40 m"],a:1,cat:"Distances",exp:"À 50 km/h, la distance de freinage (voiture bien entretenue, route sèche) est d'environ 14 m. La distance d'arrêt totale (réaction + freinage) est d'environ 28 m."},
+  {q:"Que faire quand un véhicule prioritaire (ambulance, pompiers, police) vous dépasse en urgence ?",choices:["Accélérer pour ne pas le gêner","Vous rabattre et céder le passage immédiatement","Continuer normalement","Klaxonner pour prévenir les autres"],a:1,cat:"Priorités",exp:"Tout véhicule d'urgence en intervention (gyrophare + sirène) est prioritaire. Vous devez vous écarter immédiatement et lui laisser le passage."},
+  {q:"La distance de sécurité entre deux véhicules sur autoroute doit être :",choices:["Au moins 30 m","L'équivalent de 2 secondes de trajet minimum","Au moins 100 m","La longueur de votre voiture x 3"],a:1,cat:"Distances",exp:"La règle des 2 secondes est le minimum. Sur autoroute à vitesse élevée, mieux vaut 3 secondes. Vous pouvez utiliser les repères au sol pour compter."},
+],
+i:[ // ── INTERMÉDIAIRE ──
+  {q:"À une intersection, un feu tricolore est en panne. Quelle règle s'applique ?",choices:["La priorité au plus rapide","La priorité à droite","Le premier arrivé passe","Personne ne passe"],a:1,cat:"Priorités",exp:"Quand un feu est en panne, c'est la règle de la priorité à droite qui s'applique, comme pour un carrefour sans signalisation."},
+  {q:"Vous roulez sur une voie prioritaire (losange jaune). Vous arrivez à un carrefour avec une route secondaire à droite. Qui est prioritaire ?",choices:["Vous, car vous êtes sur la route prioritaire","Le véhicule venant de droite car priorité à droite","Celui qui arrive le premier","Le plus lent"],a:0,cat:"Priorités",exp:"Sur une route prioritaire (signalisée par le losange jaune), vous êtes prioritaire sur toutes les voies qui se greffent, même à droite."},
+  {q:"À quelle distance minimum devez-vous vous arrêter avant un passage à niveau ?",choices:["1 m","3 m","5 m","10 m"],a:2,cat:"Signalisation",exp:"Vous devez vous arrêter avant la ligne d'arrêt ou, à défaut, à 5 mètres minimum de la première voie ferrée."},
+  {q:"Quelle est la vitesse maximale sur voie express (route à 2×2 voies sans séparateur ou avec accès limités) ?",choices:["90 km/h","100 km/h","110 km/h","130 km/h"],a:2,cat:"Vitesses",exp:"Sur les voies express (ou déviations 2×2 voies), la vitesse maximale est de 110 km/h par temps sec."},
+  {q:"Quelle est la distance d'arrêt à 90 km/h par temps sec (approximation) ?",choices:["40 m","60 m","85 m","110 m"],a:2,cat:"Distances",exp:"À 90 km/h : distance de réaction ≈ 25 m + distance de freinage ≈ 46 m = environ 71 m. On retient souvent 85 m pour inclure les variations."},
+  {q:"Peut-on dépasser une colonne de véhicules sur une ligne continue ?",choices:["Oui si la visibilité est bonne","Non, jamais","Oui si on est pressé","Oui si les véhicules sont à l'arrêt"],a:1,cat:"Comportement",exp:"Une ligne blanche continue ne peut jamais être franchie pour doubler, quelle que soit la situation. Le dépassement sur ligne continue est une infraction grave."},
+  {q:"Lors d'un dépassement, dans quel ordre effectue-t-on les manœuvres ?",choices:["On dépasse puis on regarde","Rétroviseurs, clignotant, vérification angle mort, dépassement, retour","Clignotant, dépassement, clignotant","Accélération puis dépassement"],a:1,cat:"Comportement",exp:"La séquence correcte est : regarder dans les rétroviseurs, mettre le clignotant, vérifier l'angle mort, effectuer le dépassement, remettre le clignotant à droite, reprendre sa voie."},
+  {q:"La distance de freinage double si la vitesse est doublée. Vrai ou Faux ?",choices:["Vrai","Faux – elle est multipliée par 4","Faux – elle est multipliée par 3","Faux – elle reste identique"],a:1,cat:"Distances",exp:"La distance de freinage varie avec le carré de la vitesse : doubler la vitesse multiplie la distance de freinage par 4. La distance d'arrêt totale n'est pas doublée mais quadruplée."},
+  {q:"Sur route mouillée, comment évolue la distance de freinage par rapport au sec ?",choices:["Elle reste identique","Elle est 1,5 fois plus longue","Elle est 2 fois plus longue","Elle est 3 fois plus longue"],a:2,cat:"Distances",exp:"Sur chaussée mouillée, la distance de freinage est environ deux fois plus longue qu'à sec. Il faut adapter sa vitesse et augmenter les distances de sécurité."},
+  {q:"Qu'est-ce que l'aquaplaning ?",choices:["Un type de dérapage en virage","La perte d'adhérence des pneus sur film d'eau","Un brouillard au-dessus de l'eau","Un problème de direction assistée"],a:1,cat:"Comportement",exp:"L'aquaplaning (ou aquaplanage) survient quand les pneus ne peuvent plus évacuer l'eau : le véhicule flotte sur un film d'eau, sans adhérence ni direction. Vous devez relâcher l'accélérateur sans freiner brutalement."},
+  {q:"Peut-on stationner à moins de 5 mètres d'un carrefour ?",choices:["Oui si les feux fonctionnent","Non, c'est interdit","Oui moins de 2 minutes","Oui la nuit"],a:1,cat:"Stationnement",exp:"Il est interdit de stationner à moins de 5 mètres d'un carrefour (sauf exception locale signalisée) pour préserver la visibilité."},
+  {q:"Sur chaussée enneigée, vous devez adapter votre vitesse. Quelle règle s'applique ?",choices:["Rouler à 80 km/h maximum","Adapter sa vitesse aux conditions réelles","Respecter strictement les limitations affichées","Rouler à la même vitesse mais plus doucement"],a:1,cat:"Comportement",exp:"Par temps de neige ou de verglas, vous devez adapter votre vitesse aux conditions, même si cela signifie rouler bien en dessous des limitations affichées."},
+  {q:"En ville, sur une route à 50 km/h, vous voyez un bus scolaire à l'arrêt avec feux orange clignotants. Vous devez :",choices:["Accélérer pour passer avant","Dépasser prudemment à 30 km/h","Vous arrêter et attendre que les enfants soient en sécurité","Klaxonner"],a:2,cat:"Comportement",exp:"Quand un bus scolaire est à l'arrêt avec feux clignotants, vous devez vous arrêter et attendre que tous les enfants soient montés ou descendus en sécurité."},
+  {q:"La règle de priorité dans un tunnel est :",choices:["Priorité aux véhicules montants","Priorité à droite","Le tunnel étant une voie prioritaire, vous êtes toujours prioritaire","Priorité aux véhicules les plus lourds"],a:0,cat:"Priorités",exp:"Dans un tunnel unidirectionnel, les véhicules montants sont prioritaires sur les descendants. Respectez la signalisation spécifique aux tunnels."},
+  {q:"Qu'est-ce qu'un angle mort ?",choices:["Une zone de chaussée non éclairée","Une zone non visible dans les rétroviseurs","Un virage sans visibilité","La zone derrière votre voiture"],a:1,cat:"Comportement",exp:"L'angle mort est la zone qui n'est visible ni dans le rétroviseur intérieur ni dans les rétroviseurs extérieurs. Il faut tourner la tête pour vérifier avant tout changement de voie."},
+  {q:"Quelle est la sanction pour excès de vitesse de plus de 50 km/h au-dessus de la limite ?",choices:["135 € d'amende","Retrait immédiat du permis possible, 1 500 € d'amende, 6 points en moins","750 € et 3 points","Suspension 6 mois automatique"],a:1,cat:"Infractions",exp:"Un excès de vitesse de plus de 50 km/h est un délit : retrait possible du permis sur-le-champ, jusqu'à 1 500 € d'amende, perte de 6 points. Récidive : jusqu'à 3 750 €."},
+  {q:"La nuit, sur route, vous voyez un véhicule venir en sens inverse avec les feux de route. Vous devez :",choices:["Mettre vos feux de route aussi","Passer en feux de croisement et regarder le bord droit de la route","Vous arrêter","Klaxonner"],a:1,cat:"Éclairage",exp:"Face à un éblouissement, passez en feux de croisement et fixez le côté droit de la route (le bord) pour ne pas être ébloui et maintenir votre trajectoire."},
+  {q:"Que signifie un double trait blanc sur la chaussée (ligne d'effet des feux) ?",choices:["Arrêt interdit","Vous devez vous arrêter avant cette ligne au feu rouge","Limite de dépassement","Début de voie réservée"],a:1,cat:"Signalisation",exp:"La ligne d'effet des feux (double trait blanc ou STOP peint) marque l'endroit où vous devez vous arrêter lorsque le feu est rouge."},
+  {q:"Peut-on effectuer un demi-tour sur autoroute ?",choices:["Oui si la voie est libre","Oui sur la BAU","Oui si on a raté sa sortie","Non, c'est interdit"],a:3,cat:"Autoroute",exp:"Le demi-tour est strictement interdit sur autoroute. Si vous ratez votre sortie, vous devez aller jusqu'à la prochaine sortie."},
+  {q:"À quoi servent les bandes rugueuses (bandes sonores) sur les bords d'autoroute ?",choices:["Délimiter les voies","Signaler acoustiquement la sortie de voie (somnolence)","Améliorer l'adhérence","Délimiter la bande d'arrêt d'urgence"],a:1,cat:"Autoroute",exp:"Les bandes rugueuses émettent un bruit et des vibrations quand on les franchit, alertant le conducteur somnolent qu'il sort de sa voie. C'est un dispositif anti-somnolence."},
+  {q:"Qu'est-ce que le 'code de la rue' ?",choices:["Le code de la route en ville","Un ensemble de règles spécifiques aux zones 30","La priorité aux piétons et cyclistes","Le code applicable uniquement aux deux-roues"],a:2,cat:"Comportement",exp:"Le 'code de la rue' désigne les règles qui accordent une attention particulière aux usagers les plus vulnérables (piétons, cyclistes, personnes âgées) en milieu urbain."},
+  {q:"Quelle est la vitesse maximale dans une zone de rencontre ?",choices:["10 km/h","20 km/h","30 km/h","50 km/h"],a:1,cat:"Vitesses",exp:"Dans une zone de rencontre (signalisée par un panneau spécifique), la vitesse est limitée à 20 km/h. Les piétons y sont prioritaires."},
+  {q:"Vous circulez sur une route à 80 km/h. Quelle est votre distance de réaction à 1 seconde ?",choices:["10 m","16 m","22 m","28 m"],a:2,cat:"Distances",exp:"À 80 km/h = 22,2 m/s. En 1 seconde de temps de réaction, vous parcourez environ 22 mètres sans freiner. D'où l'importance de ne pas être distrait."},
+  {q:"Que se passe-t-il si votre permis tombe à 0 point ?",choices:["Vous recevez un avertissement","Votre permis est invalidé, vous devez le repasser","Vous avez 6 mois pour récupérer des points","Vous êtes convoqué au tribunal"],a:1,cat:"Permis",exp:"Si votre solde de points atteint 0, votre permis est invalidé (annulé). Vous devez repasser les épreuves du permis après un délai d'inéligibilité d'au moins 6 mois."},
+  {q:"Combien de points perd-on pour un excès de vitesse entre 20 et 30 km/h au-dessus de la limite ?",choices:["1 point","2 points","3 points","4 points"],a:1,cat:"Infractions",exp:"Un excès de vitesse compris entre 20 et 30 km/h au-dessus de la limite entraîne le retrait de 2 points du permis et une amende."},
+  {q:"L'usage du gyrophare orange (sans sirène) sur un véhicule signifie :",choices:["Véhicule prioritaire absolument","Véhicule à signaler (travaux, dépannage) sans priorité absolue","Véhicule de police","Ambulance en intervention"],a:1,cat:"Signalisation",exp:"Le gyrophare orange signale un véhicule à signalisation spéciale (convoi exceptionnel, dépanneuse, travaux) qui n'est pas prioritaire mais qui demande de la prudence."},
+  {q:"La règle de conduite à gauche sur autoroute (voie de dépassement) est :",choices:["Vous pouvez rester à gauche si vous roulez à 130 km/h","Vous devez reprendre la droite après chaque dépassement","La voie de gauche est pour la vitesse, on peut y rester","C'est au choix du conducteur"],a:1,cat:"Autoroute",exp:"La voie de gauche est une voie de dépassement uniquement. Vous devez obligatoirement reprendre la voie de droite dès que le dépassement est effectué."},
+  {q:"Comment récupère-t-on des points sur son permis (conducteur confirmé) ?",choices:["En payant une amende","Automatiquement après 1 an sans infraction grave (1 point/an, max 12)","En passant une formation de récupération","En demandant au préfet"],a:1,cat:"Permis",exp:"Pour un conducteur confirmé, les points se récupèrent automatiquement : 1 point par année pleine sans infraction entraînant retrait de points, jusqu'au maximum de 12 points. Une formation permet de récupérer 4 points."},
+  {q:"Qu'est-ce que le 'code MSPC' dans le contexte des manœuvres de dépassement ?",choices:["Miroir, Signal, Poste (trajectoire), Contrôle","Manœuvre Sécurisée Prudente et Contrôlée","Rien, terme non officiel","Miroir, Signe, Point mort, Clignotant"],a:0,cat:"Comportement",exp:"La méthode MSPC (Miroir – Signal – Point de contrôle/angle mort – déplacement) est une méthode enseignée en auto-école pour toute manœuvre de changement de direction ou de voie."},
+  {q:"En cas de brouillard avec visibilité inférieure à 50 m sur autoroute, la vitesse est limitée à :",choices:["50 km/h","80 km/h","100 km/h","110 km/h"],a:0,cat:"Vitesses",exp:"Par brouillard ou mauvaises conditions réduisant la visibilité à moins de 50 m, la vitesse est limitée à 50 km/h sur tous types de routes."},
+  {q:"Le feu orange fixe (sans clignoter) signifie :",choices:["Vous pouvez passer si vous êtes engagé","Accélérez pour passer avant le rouge","Préparez-vous à vous arrêter sauf si vous êtes trop proche de la ligne","Feu en panne"],a:2,cat:"Signalisation",exp:"Le feu orange fixe signifie que le feu va passer au rouge : vous devez vous arrêter sauf si vous êtes si proche de la ligne d'arrêt qu'un freinage brutal serait dangereux."},
+  {q:"Peut-on circuler avec un pneu dont le témoin d'usure est atteint ?",choices:["Oui en ville seulement","Oui si on roule prudemment","Non, c'est dangereux et interdit","Oui en attendant de le changer"],a:2,cat:"Véhicule",exp:"Un pneu usé (témoin d'usure atteint) doit être changé immédiatement. Conduire avec des pneus lisses est une infraction et met en danger votre vie et celle des autres."},
+  {q:"Quelle est la signification du marquage 'zigzag jaune' sur la chaussée ?",choices:["Zone de dépassement interdit","Stationnement interdit (surtout devant les écoles)","Piste cyclable","Zone de livraison"],a:1,cat:"Stationnement",exp:"Les zigzags jaunes marquent une zone où le stationnement est interdit, notamment devant les écoles, pour assurer la visibilité des enfants."},
+  {q:"Peut-on stationner dans un couloir de bus ?",choices:["Oui hors des heures de service","Oui moins de 5 minutes avec les warnings","Non, jamais","Oui la nuit"],a:0,cat:"Stationnement",exp:"Certains couloirs de bus sont réservés uniquement pendant les heures indiquées. Hors de ces horaires, le stationnement peut être autorisé. Lisez toujours la signalisation."},
+  {q:"La priorité à droite s'applique-t-elle entre une route et une piste cyclable ?",choices:["Oui, toujours","Non, le cycliste est toujours prioritaire","Cela dépend de la signalisation","Non, la priorité à droite ne s'applique qu'aux voitures"],a:2,cat:"Priorités",exp:"La priorité entre route et piste cyclable dépend de la signalisation. Généralement, une piste cyclable débouchant sur une route doit céder le passage, mais si elle est dotée d'un STOP ou d'un cédez le passage, c'est indiqué."},
+  {q:"Quelle infraction peut entraîner l'immobilisation immédiate du véhicule ?",choices:["Excès de 20 km/h","Défaut d'assurance","Non port de la ceinture","Téléphone au volant"],a:1,cat:"Infractions",exp:"Le défaut d'assurance peut entraîner l'immobilisation et la mise en fourrière immédiate du véhicule, en plus d'une amende pouvant aller jusqu'à 3 750 €."},
+  {q:"Qu'est-ce que la 'conduite accompagnée' (AAC) ?",choices:["Conduire avec un copain","Conduire sur route fermée","Conduire à partir de 15 ans avec un accompagnateur qualifié","Conduire avec un GPS"],a:2,cat:"Permis",exp:"L'AAC (Apprentissage Anticipé de la Conduite) permet de conduire sur la voie publique à partir de 15 ans, accompagné d'un adulte titulaire du permis depuis plus de 5 ans."},
+  {q:"En montagne, sur route étroite, qui est prioritaire ?",choices:["Le véhicule montant","Le véhicule descendant","Le plus léger","Le premier arrivé"],a:0,cat:"Priorités",exp:"Sur route étroite de montagne, le véhicule qui monte est prioritaire sur le véhicule qui descend, car c'est plus difficile de reculer en montée."},
+  {q:"La 'zone 30' en agglomération signifie :",choices:["30 km/h max, priorité aux voitures","30 km/h max, pas de changement de priorité","30 km/h max, piétons et cyclistes prioritaires","30 km/h minimum"],a:1,cat:"Vitesses",exp:"Une zone 30 impose une vitesse maximale de 30 km/h. Les règles de priorité restent identiques (priorité à droite). C'est différent d'une zone de rencontre (20 km/h, piétons prioritaires)."},
+  {q:"Que signifie une flèche verte sous un feu rouge ?",choices:["Vous pouvez continuer tout droit","Vous pouvez tourner dans la direction indiquée après avoir cédé le passage","Voie réservée aux bus","Feu en panne"],a:1,cat:"Signalisation",exp:"La flèche verte clignotante sous un feu rouge autorise les virages dans la direction indiquée, mais vous devez céder le passage aux piétons et aux véhicules circulant normalement."},
+  {q:"Que doit faire un conducteur qui ressent de la somnolence sur autoroute ?",choices:["Ouvrir la fenêtre et continuer","Mettre la radio plus forte","S'arrêter dès que possible sur une aire de repos pour se reposer","Accélérer pour raccourcir le trajet"],a:2,cat:"Comportement",exp:"La somnolence au volant est très dangereuse. Dès les premiers signes, arrêtez-vous sur une aire de repos pour dormir 15-20 minutes. Ouvrir la fenêtre ou mettre la radio ne suffit pas."},
+  {q:"Quelle est la différence entre arrêt et stationnement ?",choices:["L'arrêt est court (moins de 5 min), le stationnement est plus long","L'arrêt est avec moteur, le stationnement sans","L'arrêt est accompagné, le stationnement est seul","Il n'y a pas de différence"],a:0,cat:"Stationnement",exp:"L'arrêt est une immobilisation momentanée du véhicule (max quelques minutes, conducteur présent). Le stationnement est une immobilisation plus longue ou avec le conducteur absent."},
+  {q:"Combien de points perd-on pour le non-port de la ceinture ?",choices:["1 point","2 points","3 points","6 points"],a:2,cat:"Infractions",exp:"Le non-port de la ceinture entraîne la perte de 3 points sur le permis et une amende forfaitaire de 135 €."},
+  {q:"Peut-on utiliser des feux antibrouillard avant par beau temps ?",choices:["Oui le soir","Oui en ville","Non, c'est interdit","Oui si on veut plus de visibilité"],a:2,cat:"Éclairage",exp:"L'utilisation des antibrouillard avant (ou arrière) par temps clair est interdite car cela peut éblouir les autres conducteurs. Ils sont réservés à la brume, la neige et le brouillard."},
+],
+e:[ // ── EXPERT ──
+  {q:"Vous arrivez à un carrefour non signalisé. Vous venez de la gauche. Sur votre droite, il y a un véhicule A. Sur votre gauche, il y a un véhicule B qui veut tourner devant vous. Qui est prioritaire ?",choices:["Vous êtes prioritaire sur B mais pas sur A","A est prioritaire sur vous, vous êtes prioritaire sur B","B est prioritaire car il est à gauche","Aucun véhicule n'est prioritaire"],a:1,cat:"Priorités",exp:"La priorité à droite est absolue : A (à votre droite) est prioritaire sur vous. Vous êtes prioritaire sur B (qui vient de votre gauche)."},
+  {q:"Un véhicule remorque une caravane (PTAC total < 3,5 T). Quelle est sa vitesse max sur autoroute ?",choices:["110 km/h","100 km/h","130 km/h","90 km/h"],a:1,cat:"Vitesses",exp:"Un ensemble véhicule + remorque dont le PTAC total est inférieur à 3,5 T est limité à 130 km/h sur autoroute si le rapport poids remorque/poids voiture ≤ 1. Sinon, 100 km/h."},
+  {q:"Quelle est la peine maximale pour conduite sans permis ?",choices:["1 an de prison et 15 000 €","5 ans de prison et 75 000 €","2 ans de prison et 30 000 €","3 mois et 1 500 €"],a:0,cat:"Infractions",exp:"La conduite sans permis est un délit puni de 1 an d'emprisonnement et 15 000 € d'amende. Des peines complémentaires (confiscation du véhicule) peuvent s'ajouter."},
+  {q:"Un conducteur entre dans un tunnel bidirectionnel à sens alterné. La signalisation indique qu'un convoi exceptionnel est en sens inverse. Il doit :",choices:["Klaxonner et passer vite","S'arrêter et attendre que le convoi soit passé","Reculer","Dépasser par la droite"],a:1,cat:"Comportement",exp:"Face à un convoi exceptionnel ou à un véhicule large dans un tunnel, arrêtez-vous au coin le plus proche et attendez que la voie soit libre."},
+  {q:"La peine de 'retrait immédiat du permis' peut survenir si l'alcoolémie est :",choices:["Supérieure à 0,5 g/L","Supérieure à 0,8 g/L","Supérieure à 1,2 g/L","À tout taux supérieur à 0,2 g/L pour les novices"],a:1,cat:"Alcool",exp:"Les forces de l'ordre peuvent procéder à un retrait immédiat du permis (rétention) dès que le taux d'alcoolémie est supérieur ou égal à 0,8 g/L de sang."},
+  {q:"Qu'est-ce que le 'délit de fuite' ?",choices:["Dépasser un véhicule de police","Partir d'un accident dans lequel on est impliqué sans s'identifier","Rouler vite pour échapper à un contrôle","Refuser d'obtempérer"],a:1,cat:"Infractions",exp:"Le délit de fuite consiste à quitter les lieux d'un accident dans lequel on est impliqué pour éviter sa responsabilité. Peine : 3 ans de prison, 75 000 €, annulation du permis."},
+  {q:"Sur autoroute, la vitesse minimale sur la voie de gauche est de 80 km/h. Quelle infraction commet-on en roulant à 60 km/h sur cette voie ?",choices:["Aucune infraction","Conduite à allure anormalement réduite","Défaut de maîtrise","Obstruction volontaire"],a:1,cat:"Infractions",exp:"Circuler à une vitesse anormalement réduite sur autoroute (voie gauche < 80 km/h) constitue une infraction : 2 points retirés, amende de 2e classe."},
+  {q:"Que signifie la signalisation 'XY mètres' entre les flèches de rabattement sur autoroute ?",choices:["Distance pour s'arrêter","Distance restante avant la fin de la voie","Distance jusqu'à la prochaine sortie","Largeur de la voie"],a:1,cat:"Autoroute",exp:"Les flèches de rabattement (pointées vers la droite) avec les distances indiquent qu'une voie se termine. Vous devez vous rabattre à droite avant que la voie disparaisse."},
+  {q:"Quelle est la sanction pour non-respect d'un feu rouge ?",choices:["1 point et 35 €","4 points et 135 €","6 points et 750 €","3 points et 135 €"],a:1,cat:"Infractions",exp:"Griller un feu rouge entraîne le retrait de 4 points sur le permis et une amende forfaitaire de 135 €."},
+  {q:"Lors d'un accident, vous êtes obligé de prêter assistance à une personne blessée. C'est :",choices:["Un devoir moral","Une obligation légale (obligation de porter secours)","Optionnel si vous avez peur","Obligatoire uniquement pour les médecins"],a:1,cat:"Accidents",exp:"Ne pas porter secours à une personne en péril est un délit ('non-assistance à personne en danger'). C'est une obligation légale pour tout citoyen."},
+  {q:"Quelle est la vitesse maximale pour les véhicules agricoles sur route ?",choices:["25 km/h","40 km/h","50 km/h","80 km/h"],a:1,cat:"Vitesses",exp:"Les véhicules agricoles (tracteurs, machines agricoles) sont limités à 40 km/h sur route, sauf autorisation spéciale."},
+  {q:"Un conducteur en état d'ivresse (>0,8 g/L) cause un accident mortel. La peine maximale est :",choices:["5 ans et 75 000 €","10 ans et 150 000 €","7 ans et 100 000 €","3 ans et 45 000 €"],a:1,cat:"Alcool",exp:"L'homicide involontaire avec circonstance aggravante d'alcoolémie est puni de 10 ans de prison et 150 000 € d'amende."},
+  {q:"La 'conduite addictive' au volant concerne :",choices:["Uniquement l'alcool","Uniquement les drogues illicites","L'alcool, les drogues illicites et certains médicaments","Uniquement les médicaments"],a:2,cat:"Drogues",exp:"Les substances qui altèrent la conduite incluent l'alcool, les drogues illicites (cannabis, cocaïne…) ET certains médicaments légaux (antihistaminiques, anxiolytiques, certains somnifères). Lisez toujours la notice."},
+  {q:"Quelle est la largeur maximale autorisée pour un véhicule sur route nationale sans autorisation spéciale ?",choices:["2 m","2,5 m","3 m","3,5 m"],a:1,cat:"Véhicule",exp:"La largeur maximale d'un véhicule (hors chargement) sur route nationale est de 2,55 m (2,6 m pour les cars et véhicules frigorifiques). Au-delà, c'est un convoi exceptionnel."},
+  {q:"Qu'est-ce qu'un 'refus d'obtempérer' ?",choices:["Refuser de payer une amende","Refuser de s'arrêter à une injonction des forces de l'ordre","Refuser un contrôle technique","Refuser de signer un PV"],a:1,cat:"Infractions",exp:"Le refus d'obtempérer (ne pas s'arrêter quand les forces de l'ordre le demandent) est un délit grave : 2 ans de prison, 15 000 €, annulation du permis."},
+  {q:"Quel code couleur indique un médicament présentant un risque pour la conduite ?",choices:["Code 1 (jaune) : pas de restriction","Code 2 (orange) : soyez prudent","Code 3 (rouge) : ne pas conduire","Code 4 (noir) : urgence uniquement"],a:2,cat:"Drogues",exp:"Les médicaments à risque portent un pictogramme coloré. Le code 3 (rouge) signifie 'attention, ne pas conduire ou conduire avec une extrême prudence en cas de doute'. Le code 1 (jaune) = attention, code 2 (orange) = ne pas conduire sans avis médical."},
+  {q:"La procédure 'priorité aux véhicules d'urgence' sur autoroute nécessite que vous :",choices:["Vous arrêtiez sur la BAU","Formiez un couloir d'urgence entre les voies de gauche et de droite","Augmentiez votre vitesse","Ne fassiez rien, ils géreront"],a:1,cat:"Comportement",exp:"En cas de bouchon sur autoroute, vous devez former un couloir d'urgence (véhicules de gauche vers la gauche, véhicules de droite vers la droite) pour laisser passer les secours."},
+  {q:"Que signifie l'acronyme 'PTAC' ?",choices:["Puissance Totale Auto Calculée","Poids Total Autorisé en Charge","Permis Techniquement Accordé au Conducteur","Pression des pneumatiques en Charge"],a:1,cat:"Véhicule",exp:"PTAC = Poids Total Autorisé en Charge. C'est la masse maximale du véhicule chargé (véhicule + passagers + marchandises). Il figure sur la carte grise."},
+  {q:"Un véhicule utilitaire léger (PTAC ≤ 3,5 T) conduit par un professionnel en dehors de son département d'immatriculation, le dimanche entre 22h et 24h, peut-il circuler ?",choices:["Oui sans restriction","Non, la circulation est interdite le dimanche soir","Oui si autorisation préfectorale","Non sauf dérogation"],a:3,cat:"Véhicule",exp:"Les poids lourds et certains VUL sont soumis à des restrictions de circulation (week-ends, jours fériés). Des dérogations existent pour les livraisons urgentes ou alimentaires. C'est complexe et variable."},
+  {q:"Quelle est la durée de conservation du relevé d'information intégral (RII) de conduite par l'assureur ?",choices:["2 ans","5 ans","8 ans","Indéfiniment"],a:1,cat:"Assurance",exp:"L'assureur conserve le relevé d'information intégral (historique des sinistres) pendant 5 ans. Ce document vous est fourni sur demande et est utile lors d'un changement d'assureur."},
+  {q:"Qu'est-ce qu'un 'délit de grande vitesse' (DGV) ?",choices:["Tout dépassement de vitesse","Excès de vitesse supérieur à 50 km/h","Excès de vitesse sur autoroute uniquement","Excès entre 30 et 50 km/h"],a:1,cat:"Infractions",exp:"Un délit de grande vitesse (DGV) se caractérise par un excès de vitesse de plus de 50 km/h au-dessus de la limite. C'est un délit (et non une contravention) avec des sanctions très lourdes."},
+  {q:"La 'peine complémentaire' d'annulation du permis de conduire se distingue de la suspension car :",choices:["L'annulation est temporaire, la suspension est définitive","L'annulation oblige à repasser le permis, la suspension est une interdiction temporaire","Elles sont identiques","L'annulation est décidée par la préfecture, la suspension par le juge"],a:1,cat:"Infractions",exp:"La suspension = interdiction temporaire de conduire. L'annulation = le permis est effacé, vous devez repasser les épreuves (code + conduite) pour en obtenir un nouveau."},
+  {q:"Sur route mouillée, le risque d'aquaplaning augmente si :",choices:["La vitesse est faible","Les pneus sont neufs","Les pneus sont usés et la vitesse est élevée","On utilise les freins ABS"],a:2,cat:"Comportement",exp:"L'aquaplaning est favorisé par des pneus usés (incapables d'évacuer l'eau) et une vitesse élevée. Il peut survenir dès 70-80 km/h avec des pneus dégradés sur route mouillée."},
+  {q:"Qu'est-ce qu'un 'convoi exceptionnel' (CE) ?",choices:["Un véhicule d'urgence avec sirène","Un véhicule ou chargement dépassant les dimensions/poids légaux, avec autorisation spéciale","Un cortège funèbre","Un bus articulé"],a:1,cat:"Véhicule",exp:"Un convoi exceptionnel est un véhicule ou ensemble dont les dimensions (longueur, largeur, hauteur) ou la masse dépassent les limites légales. Il nécessite une autorisation préfectorale et doit être accompagné de véhicules de sécurité."},
+  {q:"En cas de pluie verglaçante, quelle est la mesure la plus efficace ?",choices:["Rouler avec les 4 feux de détresse","Ne pas conduire ou rouler à vitesse très réduite avec beaucoup de prudence","Utiliser les chaînes","Rouler en 2e vitesse constamment"],a:1,cat:"Comportement",exp:"La pluie verglaçante rend la conduite extrêmement dangereuse. La meilleure décision est souvent de ne pas conduire. Si vous devez rouler, réduisez drastiquement la vitesse et augmentez les distances de sécurité."},
+  {q:"Que signifie le signal 'museau de requin' (triangle peint sur la chaussée) ?",choices:["Fin de priorité","Cédez le passage, vous n'êtes pas prioritaire","Passage à niveau","Ralentisseur"],a:1,cat:"Signalisation",exp:"Les 'dents de requin' (triangles blancs pointés vers vous, peints sur la chaussée) signifient que vous devez céder le passage. C'est l'équivalent peint du panneau triangle inversé."},
+  {q:"Qu'est-ce que la 'visite médicale obligatoire' pour les conducteurs de taxi ?",choices:["Une visite tous les 5 ans","Une visite tous les 2 ans comme pour le contrôle technique","Une visite périodique imposée pour les conducteurs professionnels","Cela n'existe pas"],a:2,cat:"Permis",exp:"Certains permis professionnels (C, D, taxi, transport en commun) imposent des visites médicales périodiques pour s'assurer que le conducteur est toujours apte à conduire."},
+  {q:"Le 'permis à points' a été instauré en France en :",choices:["1972","1982","1992","2002"],a:2,cat:"Permis",exp:"Le système du permis à points (avec 12 points) a été instauré en France par la loi du 10 juillet 1989, avec une mise en application en juillet 1992."},
+  {q:"Que risque-t-on en cas de dépassement sans visibilité suffisante entraînant un accident ?",choices:["Simple amende","Mise en cause pénale pour mise en danger de la vie d'autrui","Perte de 3 points uniquement","Rien si c'est l'autre qui est en tort"],a:1,cat:"Infractions",exp:"Un dépassement dangereux sans visibilité pouvant entraîner un accident peut être qualifié de 'mise en danger de la vie d'autrui' : 1 an de prison et 15 000 €."},
+  {q:"La règle de 'l'air bag' côté passager et les sièges bébé dos à la route est :",choices:["L'airbag doit être désactivé si siège bébé dos à la route","L'airbag peut rester actif","Aucune règle particulière","Le siège bébé doit être à l'arrière obligatoirement"],a:0,cat:"Sécurité",exp:"Un siège bébé installé dos à la route (groupe 0/0+) sur le siège avant passager est INTERDIT si l'airbag frontal est actif. L'airbag doit être désactivé car il peut provoquer la mort de l'enfant."},
+  {q:"Quelle est la durée maximale de conduite en une journée pour un conducteur VL (voiture légère) particulier ?",choices:["8 heures","10 heures","Il n'y a pas de limite légale","4,5 heures d'affilée maximum"],a:2,cat:"Comportement",exp:"Pour les conducteurs de véhicules légers (particuliers), il n'y a pas de durée maximale légale de conduite. En revanche, la fatigue est la première cause d'accidents mortels sur autoroute. Il est recommandé de faire une pause toutes les 2 heures."},
+  {q:"Le stationnement 'dangereux' se distingue du stationnement 'gênant' car :",choices:["Le dangereux est devant une bouche d'incendie","Le dangereux réduit la visibilité ou présente un risque d'accident","Le dangereux dure plus longtemps","Il n'y a pas de différence"],a:1,cat:"Stationnement",exp:"Le stationnement gênant empêche la circulation ou gêne les piétons. Le stationnement dangereux (plus grave) compromet la sécurité en réduisant la visibilité (virages, dos d'âne, sommet de côte)."},
+  {q:"Sur autoroute, un automobiliste peut être verbalisé pour 'conduite sur bande d'arrêt d'urgence' même :",choices:["Seulement en cas d'embouteillage","Seulement si un autre véhicule est en danger","Dans tous les cas sauf panne avérée","Jamais si on roule lentement"],a:2,cat:"Autoroute",exp:"La BAU est réservée aux arrêts d'urgence (panne, malaise). L'utiliser pour éviter un bouchon ou comme voie de circulation est une infraction grave, sanctionnée même sans accident."},
+  {q:"Quelle est la hauteur maximale autorisée pour un véhicule particulier ?",choices:["2 m","3 m","4 m","Pas de limite pour les VL"],a:2,cat:"Véhicule",exp:"La hauteur maximale pour un véhicule est généralement de 4 mètres (règle générale européenne). Attention aux tunnels et parcs souterrains qui peuvent avoir des hauteurs inférieures."},
+  {q:"En cas de perte totale du véhicule suite à un accident, l'assurance 'tous risques' indemnise :",choices:["La valeur neuve du véhicule","La valeur vénale (valeur marchande au jour du sinistre)","Le montant de rachat conseillé","Rien, c'est une perte totale"],a:1,cat:"Assurance",exp:"En cas de perte totale, l'assurance tous risques indemnise à hauteur de la valeur vénale (valeur du marché au jour du sinistre). Ce peut être inférieur à la valeur d'achat."},
+  {q:"Qu'est-ce que le 'bonus-malus' en assurance auto ?",choices:["Un système de récompense pour les jeunes conducteurs","Un coefficient modulant la prime selon l'historique d'accidents","Un supplément de prime fixe","Une aide de l'État pour les conducteurs économes"],a:1,cat:"Assurance",exp:"Le bonus-malus (ou coefficient de réduction-majoration) ajuste la prime d'assurance chaque année : elle diminue si aucun accident responsable (bonus) ou augmente en cas d'accident responsable (malus)."},
+  {q:"Le 'tonnage' affiché sur un panneau rond à bordure rouge avec un nombre (ex: '7,5T') signifie :",choices:["Vitesse maximale pour les camions","Poids maximal autorisé pour les véhicules","Longueur maximale","Hauteur de la chaussée supportée"],a:1,cat:"Panneaux",exp:"Ce panneau de prescription indique le poids total maximal autorisé en charge pour les véhicules empruntant cette voie. Ex: 7,5T = seuls les véhicules de moins de 7,5 T peuvent passer."},
+  {q:"Quelle est la sanction pour un conducteur qui cause un accident mortel et prend la fuite (délit de fuite + homicide involontaire) ?",choices:["5 ans et 50 000 €","7 ans et 100 000 €","10 ans et 150 000 €","2 ans et 30 000 €"],a:1,cat:"Infractions",exp:"Homicide involontaire avec délit de fuite : jusqu'à 7 ans de prison et 100 000 € d'amende, avec annulation du permis et interdiction de le repasser."},
+  {q:"Peut-on conduire après avoir consommé légalement (sur ordonnance) des médicaments de catégorie 3 (logo rouge) ?",choices:["Oui si c'est prescrit","Non, ces médicaments interdisent de conduire","Oui, mais avec grande prudence et avis médical","C'est au patient de décider"],a:1,cat:"Drogues",exp:"Les médicaments classés en niveau 3 (pictogramme rouge) contre-indiquent formellement la conduite. Votre médecin doit vous informer, et vous ne devez pas conduire tant que vous prenez ce traitement."},
+  {q:"La signalisation de position des véhicules lents la nuit (engin agricole, cycliste) impose l'utilisation :",choices:["Des feux de croisement uniquement","De feux ou réflecteurs réglementaires","De deux feux blancs à l'avant","De gyrophare orange"],a:1,cat:"Éclairage",exp:"Tout véhicule ou engin lent doit être équipé de feux réglementaires ou de cataphotes (réflecteurs) visibles la nuit. Pour les vélos : feu blanc avant, feu rouge arrière."},
+  {q:"Un conducteur a son permis suspendu mais continue à conduire. Quelle est la peine ?",choices:["Même chose que sans permis (1 an, 15 000 €)","2 ans de prison et 75 000 €","Amende de 4e classe uniquement","3 mois et 3 750 €"],a:0,cat:"Infractions",exp:"Conduire malgré une suspension de permis est puni de 2 ans d'emprisonnement et 4 500 € d'amende (+ confiscation possible du véhicule). C'est différent de la conduite sans permis."},
+  // Fix: let me correct the above - conducting despite suspension = 2 ans, 4500€
+  // Actually answer 0 says "Même chose que sans permis (1 an, 15 000 €)" - that's wrong
+  // Conducting despite suspension = 2 ans, 4500€
+  // Let me adjust this question
+]
+};
+
+// Fix the last expert question answer
+DB.e[DB.e.length-1] = {q:"Conduire malgré une suspension de permis est puni de :",choices:["1 an de prison et 15 000 €","2 ans de prison et 4 500 €","6 mois et 3 750 €","Amende forfaitaire uniquement"],a:1,cat:"Infractions",exp:"Conduire malgré une suspension est un délit : 2 ans de prison et 4 500 € d'amende (+ confiscation possible du véhicule). Attention : différent de la conduite sans avoir jamais eu le permis."};
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+let curLevel='', curMode='', questions=[], curIdx=0, score=0, answered=false;
+let userAnswers=[];
+
+// ── UI HELPERS ─────────────────────────────────────────────────────────────
+function $(id){return document.getElementById(id)}
+function show(id){$(id).classList.remove('hidden')}
+function hide(id){$(id).classList.add('hidden')}
+
+function toggleTheme(){
+  const th=document.documentElement.getAttribute('data-theme')==='dark'?'light':'dark';
+  document.documentElement.setAttribute('data-theme',th);
+  $('themeBtn').textContent=th==='dark'?'☀️ Clair':'🌙 Sombre';
+}
+
+function selectLevel(l){
+  curLevel=l;
+  document.querySelectorAll('.level-card').forEach(c=>c.classList.remove('sel'));
+  $('lvl-'+l).classList.add('sel');
+  updateStart();
+}
+function selectMode(m){
+  curMode=m;
+  document.querySelectorAll('.mode-card').forEach(c=>c.classList.remove('sel'));
+  $('mode-'+m).classList.add('sel');
+  updateStart();
+}
+function updateStart(){
+  const btn=$('startBtn');
+  if(curLevel&&curMode){btn.disabled=false;btn.textContent='Commencer !';}
+  else{btn.disabled=true;btn.textContent='Choisir un niveau et un mode';}
+}
+
+// ── QUIZ LOGIC ─────────────────────────────────────────────────────────────
+function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
+
+function startQuiz(){
+  const pool=shuffle([...DB[curLevel]]);
+  questions=curMode==='exam'?pool.slice(0,40):pool;
+  curIdx=0;score=0;answered=false;userAnswers=[];
+  hide('homeScreen');show('quizScreen');
+  renderQuestion();
+}
+
+function renderQuestion(){
+  const q=questions[curIdx];
+  const total=questions.length;
+  $('qCount').textContent=`${curIdx+1} / ${total}`;
+  $('progFill').style.width=`${((curIdx)/total)*100}%`;
+  $('qScore').textContent=`✓ ${score}`;
+  $('qBadge').textContent=q.cat;
+  $('signWrap').innerHTML=q.img||'';
+  $('qText').textContent=q.q;
+  // Choices
+  const letters=['A','B','C','D'];
+  $('choicesWrap').innerHTML=q.choices.map((c,i)=>
+    `<button class="choice-btn" onclick="answer(${i})">
+      <span class="c-letter">${letters[i]}</span>${c}
+    </button>`).join('');
+  $('expl').className='expl';
+  $('nextBtn').className='next-btn';
+  answered=false;
+}
+
+function answer(idx){
+  if(answered)return;
+  answered=true;
+  const q=questions[curIdx];
+  const btns=document.querySelectorAll('.choice-btn');
+  btns.forEach(b=>b.disabled=true);
+  const correct=idx===q.a;
+  if(correct)score++;
+  btns[idx].classList.add(correct?'correct':'wrong');
+  if(!correct)btns[q.a].classList.add('correct');
+  userAnswers.push({q,userIdx:idx,correct});
+  if(curMode==='train'){
+    const e=$('expl');
+    e.innerHTML=`<strong>${correct?'✅ Correct !':'❌ Incorrect.'}</strong> ${q.exp}`;
+    e.classList.add('show');
+  }
+  $('nextBtn').classList.add('show');
+  const isLast=curIdx===questions.length-1;
+  $('nextBtn').textContent=isLast?'Voir les résultats':'Question suivante →';
+}
+
+function nextQ(){
+  if(curIdx<questions.length-1){curIdx++;renderQuestion();}
+  else showResults();
+}
+
+function showResults(){
+  hide('quizScreen');show('resultsScreen');
+  const total=questions.length;
+  const pct=Math.round((score/total)*100);
+  const pass=curMode==='exam'?score>=35:pct>=80;
+  const c=$('scoreCir');
+  c.className='score-circle '+(pass?'pass':'fail');
+  $('scNum').textContent=score;
+  $('scTot').textContent=`/${total}`;
+  $('resTitle').textContent=pass?(curMode==='exam'?'🎉 Examen réussi !':'🏆 Excellent travail !'):(curMode==='exam'?'😔 Examen non réussi':'📚 Continuez à réviser');
+  $('resSub').textContent=curMode==='exam'?`Seuil de réussite : 35/${total} — Vous avez obtenu ${score}/${total}`:`Vous avez répondu correctement à ${pct}% des questions`;
+  $('stOk').textContent=score;
+  $('stKo').textContent=total-score;
+  $('stPct').textContent=pct+'%';
+  // Review
+  const wrap=$('reviewWrap');
+  wrap.innerHTML=userAnswers.map((ua,i)=>{
+    const letters=['A','B','C','D'];
+    return`<div class="rev-item ${ua.correct?'rc':'rw'}">
+      <div class="rev-q">Q${i+1}. ${ua.q.q}</div>
+      <div class="rev-ans">
+        Votre réponse : <span class="${ua.correct?'rev-correct':'rev-wrong'}">${letters[ua.userIdx]}. ${ua.q.choices[ua.userIdx]}</span>
+        ${!ua.correct?` — Bonne réponse : <span class="rev-correct">${letters[ua.q.a]}. ${ua.q.choices[ua.q.a]}</span>`:''}
+      </div>
+      <div class="rev-exp">${ua.q.exp}</div>
+    </div>`}).join('');
+}
+
+function restartSame(){
+  hide('resultsScreen');
+  startQuiz();
+}
+function goHome(){
+  hide('resultsScreen');
+  show('homeScreen');
+}
+</script>
+</body>
+</html>
