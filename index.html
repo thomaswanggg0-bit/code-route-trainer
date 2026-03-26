@@ -128,6 +128,24 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:.9re
 /* Keyboard hint */
 .kbd-hint{text-align:center;font-size:.75rem;color:var(--muted);margin-top:.6rem}
 kbd{background:var(--border);border-radius:4px;padding:.1rem .35rem;font-size:.72rem;font-family:monospace;font-weight:700}
+/* Streak + progress */
+.hero-row{display:flex;justify-content:center;gap:1rem;margin-bottom:1.75rem;flex-wrap:wrap}
+.hero-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:.85rem 1.25rem;text-align:center;min-width:130px;box-shadow:var(--shadow)}
+.hero-val{font-size:1.6rem;font-weight:800;color:var(--primary)}
+.hero-lbl{font-size:.75rem;color:var(--muted);margin-top:.15rem}
+.master-bar-wrap{background:var(--border);border-radius:4px;height:6px;margin-top:.5rem;overflow:hidden}
+.master-bar-fill{height:100%;background:var(--primary);border-radius:4px;transition:width .5s}
+/* Timer */
+.timer-wrap{display:flex;align-items:center;gap:.4rem}
+.timer-display{font-size:.95rem;font-weight:800;color:var(--primary);min-width:48px;text-align:center}
+.timer-display.warning{color:#f59e0b}
+.timer-display.danger{color:#dc2626;animation:pulse .8s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+/* Quick mode */
+#mode-quick{grid-column:1/-1}
+/* Share button */
+.share-btn{width:100%;padding:.85rem;background:transparent;color:var(--primary);border:2px solid var(--primary);border-radius:10px;font-size:.95rem;font-weight:700;cursor:pointer;margin-top:.75rem;transition:all .2s}
+.share-btn:hover{background:var(--tbg)}
 @media(max-width:600px){
   .levels-grid{grid-template-columns:1fr}
   .modes-grid{grid-template-columns:1fr}
@@ -146,8 +164,19 @@ kbd{background:var(--border);border-radius:4px;padding:.1rem .35rem;font-size:.7
 
   <!-- HOME -->
   <div id="homeScreen">
-    <h1 class="home-title">Entraînement Code de la Route</h1>
-    <p class="home-sub">150 questions officielles · 3 niveaux · Mode examen & entraînement</p>
+    <h1 class="home-title">🚗 Code de la Route</h1>
+    <p class="home-sub">200 questions · 3 niveaux · Entraînement gratuit</p>
+    <div class="hero-row">
+      <div class="hero-card">
+        <div class="hero-val" id="streakVal">🔥 0</div>
+        <div class="hero-lbl">Jours consécutifs</div>
+      </div>
+      <div class="hero-card" style="flex:1;min-width:180px">
+        <div class="hero-val" id="masteredVal">0 / 200</div>
+        <div class="hero-lbl">Questions maîtrisées</div>
+        <div class="master-bar-wrap"><div class="master-bar-fill" id="masteredBar" style="width:0%"></div></div>
+      </div>
+    </div>
     <div class="stats-bar">
       <div class="stat-pill">📚 <span>150</span> questions</div>
       <div class="stat-pill">🎯 Seuil examen <span>35/40</span></div>
@@ -189,6 +218,10 @@ kbd{background:var(--border);border-radius:4px;padding:.1rem .35rem;font-size:.7
         <div class="mode-title">🔁 Erreurs uniquement</div>
         <div class="mode-desc" id="errorsDesc">Sélectionnez un niveau pour voir vos erreurs sauvegardées.</div>
       </div>
+      <div class="mode-card" onclick="selectMode('quick')" id="mode-quick">
+        <div class="mode-title">⚡ Mode Rapide</div>
+        <div class="mode-desc">10 questions aléatoires tous niveaux. Parfait pour réviser rapidement dans le bus.</div>
+      </div>
     </div>
     <div class="theme-filter hidden" id="themeFilter">
       <div class="sec-label">Thème <span style="font-size:.75rem;color:var(--muted);text-transform:none;letter-spacing:0">(optionnel)</span></div>
@@ -202,6 +235,7 @@ kbd{background:var(--border);border-radius:4px;padding:.1rem .35rem;font-size:.7
     <div class="qz-header">
       <span class="qz-count" id="qCount">1 / 40</span>
       <div class="prog-bar"><div class="prog-fill" id="progFill" style="width:0%"></div></div>
+      <div class="timer-wrap hidden" id="timerWrap">⏱ <span class="timer-display" id="timerDisplay">30:00</span></div>
       <span class="qz-score" id="qScore">✓ 0</span>
     </div>
     <div class="q-card">
@@ -235,6 +269,7 @@ kbd{background:var(--border);border-radius:4px;padding:.1rem .35rem;font-size:.7
       <button class="act-btn primary" onclick="restartSame()">🔄 Recommencer</button>
       <button class="act-btn secondary" onclick="goHome()">🏠 Accueil</button>
     </div>
+    <button class="share-btn" onclick="shareResult()">📤 Partager mon résultat</button>
     <div class="review-section">
       <div class="rev-title">📋 Révision complète</div>
       <div id="reviewWrap"></div>
@@ -481,6 +516,37 @@ function sd(d){localStorage.setItem(LS,JSON.stringify(d))}
 function getWrong(lv){return(ld().wrong||{})[lv]||[]}
 function addWrong(lv,qt){const d=ld();if(!d.wrong)d.wrong={};if(!d.wrong[lv])d.wrong[lv]=[];if(!d.wrong[lv].includes(qt))d.wrong[lv].push(qt);sd(d)}
 function clearCorrect(lv,cts){const d=ld();if(d.wrong&&d.wrong[lv])d.wrong[lv]=d.wrong[lv].filter(q=>!cts.includes(q));sd(d)}
+function getMastered(lv){return(ld().mastered||{})[lv]||[]}
+function addMastered(lv,qt){const d=ld();if(!d.mastered)d.mastered={};if(!d.mastered[lv])d.mastered[lv]=[];if(!d.mastered[lv].includes(qt))d.mastered[lv].push(qt);sd(d)}
+function removeMastered(lv,qt){const d=ld();if(d.mastered&&d.mastered[lv])d.mastered[lv]=d.mastered[lv].filter(q=>q!==qt);sd(d)}
+function getTotalMastered(){let n=0;['d','i','e'].forEach(l=>n+=getMastered(l).length);return n;}
+function checkStreak(){
+  const d=ld();const today=new Date().toDateString();
+  const yesterday=new Date(Date.now()-86400000).toDateString();
+  if(!d.lastVisit||d.lastVisit===today){if(!d.lastVisit){d.streak=1;d.lastVisit=today;sd(d);}}
+  else if(d.lastVisit===yesterday){d.streak=(d.streak||1)+1;d.lastVisit=today;sd(d);}
+  else{d.streak=1;d.lastVisit=today;sd(d);}
+  return ld().streak||1;
+}
+function updateHero(){
+  const s=checkStreak();const m=getTotalMastered();const total=DB.d.length+DB.i.length+DB.e.length;
+  const sv=$('streakVal');if(sv)sv.textContent='🔥 '+s;
+  const mv=$('masteredVal');if(mv)mv.textContent=m+' / '+total;
+  const mb=$('masteredBar');if(mb)mb.style.width=Math.round(m/total*100)+'%';
+}
+// ── TIMER ────────────────────────────────────────────────────────────────────
+let timerInterval=null,timerSecs=0;
+function startTimer(s){
+  timerSecs=s;updateTimerDisplay();show('timerWrap');
+  timerInterval=setInterval(()=>{timerSecs--;updateTimerDisplay();if(timerSecs<=0){clearInterval(timerInterval);showResults();}},1000);
+}
+function stopTimer(){clearInterval(timerInterval);timerInterval=null;hide('timerWrap');}
+function updateTimerDisplay(){
+  const m=Math.floor(timerSecs/60),s=timerSecs%60;
+  const el=$('timerDisplay');if(!el)return;
+  el.textContent=m+':'+(s<10?'0':'')+s;
+  el.className='timer-display'+(timerSecs<=300?' danger':timerSecs<=600?' warning':'');
+}
 
 // ── STATE ──────────────────────────────────────────────────────────────────
 let curLevel='', curMode='', curTheme='all', questions=[], curIdx=0, score=0, answered=false;
@@ -541,7 +607,8 @@ function updateStatsBar(){
 }
 function updateStart(){
   const btn=$('startBtn');
-  if(curLevel&&curMode){btn.disabled=false;btn.textContent='Commencer !';}
+  if(curMode==='quick'){btn.disabled=false;btn.textContent='Commencer !';}
+  else if(curLevel&&curMode){btn.disabled=false;btn.textContent='Commencer !';}
   else{btn.disabled=true;btn.textContent='Choisir un niveau et un mode';}
 }
 
@@ -549,8 +616,11 @@ function updateStart(){
 function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
 
 function startQuiz(){
+  stopTimer();
   let pool;
-  if(curMode==='errors'){
+  if(curMode==='quick'){
+    pool=shuffle([...DB.d,...DB.i,...DB.e]).slice(0,10);
+  } else if(curMode==='errors'){
     const wt=getWrong(curLevel);
     pool=DB[curLevel].filter(q=>wt.includes(q.q));
     if(!pool.length){alert('Aucune erreur sauvegardée pour ce niveau.');return;}
@@ -563,6 +633,7 @@ function startQuiz(){
   }
   questions=pool;curIdx=0;score=0;answered=false;userAnswers=[];
   hide('homeScreen');show('quizScreen');
+  if(curMode==='exam')startTimer(30*60);
   renderQuestion();
 }
 
@@ -598,8 +669,8 @@ function answer(idx){
   if(!correct)btns[q.a].classList.add('correct');
   userAnswers.push({q,userIdx:idx,correct});
   if(curLevel){
-    if(!correct)addWrong(curLevel,q.q);
-    else clearCorrect(curLevel,[q.q]);
+    if(!correct){addWrong(curLevel,q.q);removeMastered(curLevel,q.q);}
+    else{clearCorrect(curLevel,[q.q]);addMastered(curLevel,q.q);}
     updateStatsBar();
   }
   if(curMode==='train'||curMode==='errors'){
@@ -618,6 +689,7 @@ function nextQ(){
 }
 
 function showResults(){
+  stopTimer();
   hide('quizScreen');show('resultsScreen');
   const total=questions.length;
   const pct=Math.round((score/total)*100);
@@ -643,7 +715,7 @@ function showResults(){
       +catKeys.map(cat=>{const{c,t}=cm[cat];const p=Math.round(c/t*100);const cl=p>=80?'good':p>=50?'mid':'bad';
         return`<div class="cat-stat-row"><div class="cat-stat-label"><span>${cat}</span><span>${c}/${t} (${p}%)</span></div><div class="cat-bar"><div class="cat-bar-fill ${cl}" style="width:${p}%"></div></div></div>`;}).join('')
     :'';
-  updateStatsBar();
+  updateStatsBar();updateHero();
   if(curLevel)updateThemeFilter();
   // Review
   const wrap=$('reviewWrap');
@@ -666,17 +738,27 @@ function restartSame(){
 function goHome(){
   hide('resultsScreen');
   show('homeScreen');
+  updateHero();
+}
+function shareResult(){
+  const total=questions.length,pct=Math.round(score/total*100);
+  const lvl={d:'Débutant',i:'Intermédiaire',e:'Expert',undefined:'Tous niveaux'}[curLevel];
+  const mode={train:'Entraînement',exam:'Examen',errors:'Erreurs',quick:'Mode Rapide'}[curMode]||'';
+  const txt=`🚗 Code de la Route Trainer\n${mode} — ${lvl}\n✅ ${score}/${total} (${pct}%)\n${pct>=80?'🏆 Réussi !':'📚 Continue à réviser !'}\n👉 thomaswanggg0-bit.github.io/code-route-trainer`;
+  if(navigator.share)navigator.share({title:'Code de la Route',text:txt});
+  else if(navigator.clipboard)navigator.clipboard.writeText(txt).then(()=>alert('Résultat copié dans le presse-papier !'));
+  else alert(txt);
 }
 
 function navigateHome(){
   if(!$('homeScreen').classList.contains('hidden')) return;
   if(!$('quizScreen').classList.contains('hidden')){
     if(!confirm('Quitter la session en cours et retourner au menu ?')) return;
-    hide('quizScreen');
+    stopTimer();hide('quizScreen');
   } else {
     hide('resultsScreen');
   }
-  show('homeScreen');
+  show('homeScreen');updateHero();
 }
 
 // ── KEYBOARD ────────────────────────────────────────────────────────────────
@@ -692,7 +774,7 @@ document.addEventListener('keydown',e=>{
 });
 
 // ── INIT ────────────────────────────────────────────────────────────────────
-updateStatsBar();
+updateStatsBar();updateHero();
 // Mise à jour dynamique des compteurs
 (function(){
   const total=DB.d.length+DB.i.length+DB.e.length;
