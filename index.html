@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Code Route">
 <link rel="apple-touch-icon" href="icon.svg">
+<link rel="icon" type="image/svg+xml" href="icon.svg">
 <style>
 *{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -22,9 +23,34 @@
   --border:#334155;--muted:#94a3b8;--tbg:#1e3a5f;--tc:#93c5fd;--shadow:0 2px 8px rgba(0,0,0,.3)
 }
 body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;transition:background .3s,color .3s}
-header{background:var(--card);border-bottom:1px solid var(--border);padding:.9rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;box-shadow:var(--shadow)}
-.logo{font-size:1.2rem;font-weight:800;color:var(--primary);cursor:pointer;user-select:none}
-.logo:hover{opacity:.8}
+header{background:var(--card);border-bottom:1px solid var(--border);padding:.75rem 1.5rem;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:10;box-shadow:var(--shadow)}
+.logo{display:flex;align-items:center;gap:.6rem;cursor:pointer;user-select:none;text-decoration:none}
+.logo:hover{opacity:.85}
+.logo-mark{width:34px;height:34px;background:var(--primary);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.logo-text{font-size:1.05rem;font-weight:800;color:var(--text);line-height:1.1}
+.logo-sub{font-size:.65rem;font-weight:500;color:var(--muted);display:block}
+/* Landing hero */
+.landing-hero{text-align:center;padding:2rem 0 1rem}
+.landing-badge{display:inline-block;background:var(--tbg);color:var(--tc);font-size:.75rem;font-weight:700;padding:.3rem .9rem;border-radius:20px;margin-bottom:1rem;letter-spacing:.03em}
+.landing-title{font-size:2.2rem;font-weight:900;line-height:1.15;margin-bottom:.75rem}
+.landing-title span{color:var(--primary)}
+.landing-sub{color:var(--muted);font-size:1rem;margin-bottom:1.75rem;line-height:1.6;max-width:500px;margin-left:auto;margin-right:auto}
+.feat-row{display:flex;flex-wrap:wrap;justify-content:center;gap:.6rem;margin-bottom:2rem}
+.feat-chip{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:.35rem .9rem;font-size:.8rem;font-weight:600;color:var(--muted)}
+/* Footer */
+footer{text-align:center;padding:2rem 1rem;font-size:.78rem;color:var(--muted);border-top:1px solid var(--border);margin-top:3rem}
+footer a{color:var(--muted);text-decoration:underline;cursor:pointer;background:none;border:none;font-size:.78rem;font-family:inherit}
+footer a:hover{color:var(--primary)}
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:100;display:flex;align-items:flex-end;justify-content:center}
+.modal-overlay.hidden{display:none!important}
+.modal-box{background:var(--card);border-radius:20px 20px 0 0;padding:1.5rem;max-width:780px;width:100%;max-height:80vh;overflow-y:auto}
+.modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.25rem}
+.modal-head h2{font-size:1.1rem;font-weight:800}
+.modal-close{background:var(--border);border:none;border-radius:50%;width:30px;height:30px;cursor:pointer;font-size:1rem;color:var(--text)}
+.modal-body h3{font-size:.85rem;font-weight:700;margin:1rem 0 .35rem;color:var(--text)}
+.modal-body p,.modal-body li{font-size:.82rem;color:var(--muted);line-height:1.6}
+.modal-body ul{padding-left:1.2rem;margin-top:.25rem}
 .theme-btn{background:none;border:1px solid var(--border);border-radius:8px;padding:.45rem .85rem;cursor:pointer;color:var(--text);font-size:.9rem;transition:all .2s}
 .theme-btn:hover{background:var(--border)}
 .container{max-width:780px;margin:0 auto;padding:2rem 1rem}
@@ -157,15 +183,40 @@ kbd{background:var(--border);border-radius:4px;padding:.1rem .35rem;font-size:.7
 </head>
 <body>
 <header>
-  <div class="logo" onclick="navigateHome()">🚗 Code de la Route</div>
+  <div class="logo" onclick="navigateHome()">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none">
+        <rect x="10" y="1" width="4" height="22" rx="1.5" fill="white" opacity=".35"/>
+        <rect x="11" y="2" width="2" height="4" rx="1" fill="white"/>
+        <rect x="11" y="10" width="2" height="4" rx="1" fill="white"/>
+        <rect x="11" y="18" width="2" height="4" rx="1" fill="white"/>
+        <path d="M4 12 Q12 5 20 12" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+      </svg>
+    </div>
+    <div>
+      <span class="logo-text">Code de la Route</span>
+      <span class="logo-sub">Entraînement gratuit</span>
+    </div>
+  </div>
   <button class="theme-btn" id="themeBtn" onclick="toggleTheme()">🌙 Sombre</button>
 </header>
 <div class="container">
 
   <!-- HOME -->
   <div id="homeScreen">
-    <h1 class="home-title">🚗 Code de la Route</h1>
-    <p class="home-sub">200 questions · 3 niveaux · Entraînement gratuit</p>
+    <div class="landing-hero">
+      <div class="landing-badge">✅ 100% gratuit · Sans inscription</div>
+      <h1 class="landing-title">Réussis ton <span>Code de la Route</span></h1>
+      <p class="landing-sub">200 questions officielles, 3 niveaux de difficulté, mode examen chronométré. Entraîne-toi où tu veux, même sans connexion.</p>
+      <div class="feat-row">
+        <span class="feat-chip">📚 200 questions</span>
+        <span class="feat-chip">⏱ Examen chronométré</span>
+        <span class="feat-chip">📱 Application mobile</span>
+        <span class="feat-chip">🔥 Suivi de progression</span>
+        <span class="feat-chip">🌙 Mode sombre</span>
+        <span class="feat-chip">✈️ Hors connexion</span>
+      </div>
+    </div>
     <div class="hero-row">
       <div class="hero-card">
         <div class="hero-val" id="streakVal">🔥 0</div>
@@ -273,6 +324,56 @@ kbd{background:var(--border);border-radius:4px;padding:.1rem .35rem;font-size:.7
     <div class="review-section">
       <div class="rev-title">📋 Révision complète</div>
       <div id="reviewWrap"></div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <p>© 2025 Wang Thomas — <a onclick="openModal('modalMentions')">Mentions légales</a> · <a onclick="openModal('modalPrivacy')">Politique de confidentialité</a></p>
+  <p style="margin-top:.4rem">Site gratuit et indépendant — non affilié à l'ANTS ou aux auto-écoles</p>
+</footer>
+
+<!-- MODAL MENTIONS LÉGALES -->
+<div class="modal-overlay hidden" id="modalMentions" onclick="closeModalOutside(event,'modalMentions')">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>Mentions légales</h2>
+      <button class="modal-close" onclick="closeModal('modalMentions')">✕</button>
+    </div>
+    <div class="modal-body">
+      <h3>Éditeur du site</h3>
+      <p>Wang Thomas<br>Email : <a href="mailto:thomaswanggg0@gmail.com" style="color:var(--primary)">thomaswanggg0@gmail.com</a></p>
+      <h3>Hébergement</h3>
+      <p>Vercel Inc.<br>340 Pine Street, Suite 1200<br>San Francisco, CA 94104, États-Unis<br>vercel.com</p>
+      <h3>Propriété intellectuelle</h3>
+      <p>Les questions sont basées sur le Code de la Route officiel français (Code de la route, Code pénal). Ce site est un outil pédagogique indépendant, non affilié à l'ANTS ou à tout organisme officiel.</p>
+      <h3>Responsabilité</h3>
+      <p>Ce site est fourni à titre informatif et pédagogique uniquement. Il ne remplace pas un apprentissage officiel auprès d'une auto-école agréée. L'éditeur ne saurait être tenu responsable d'erreurs ou d'omissions dans les questions.</p>
+      <h3>Droit applicable</h3>
+      <p>Le présent site est soumis au droit français. Tout litige sera soumis aux tribunaux compétents.</p>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL CONFIDENTIALITÉ -->
+<div class="modal-overlay hidden" id="modalPrivacy" onclick="closeModalOutside(event,'modalPrivacy')">
+  <div class="modal-box">
+    <div class="modal-head">
+      <h2>Politique de confidentialité</h2>
+      <button class="modal-close" onclick="closeModal('modalPrivacy')">✕</button>
+    </div>
+    <div class="modal-body">
+      <h3>Données personnelles</h3>
+      <p>Ce site ne collecte <strong>aucune donnée personnelle</strong> sur ses serveurs. Aucune inscription, aucun email, aucun mot de passe n'est requis.</p>
+      <h3>Stockage local (localStorage)</h3>
+      <p>Votre progression (erreurs, questions maîtrisées, série quotidienne) est sauvegardée <strong>uniquement sur votre appareil</strong> dans le stockage local du navigateur. Ces données ne sont jamais transmises à un serveur et restent sous votre contrôle total.</p>
+      <h3>Cookies</h3>
+      <p>Ce site n'utilise <strong>aucun cookie</strong> de traçage ou publicitaire.</p>
+      <h3>Hébergement</h3>
+      <p>Le site est hébergé par Vercel Inc. (États-Unis). Vercel peut collecter des données techniques anonymes (adresse IP, navigateur) pour le bon fonctionnement du service. Consultez la <a href="https://vercel.com/legal/privacy-policy" target="_blank" style="color:var(--primary)">politique de confidentialité de Vercel</a>.</p>
+      <h3>Vos droits</h3>
+      <p>Vous pouvez effacer vos données locales à tout moment en vidant le stockage de votre navigateur. Pour toute question : <a href="mailto:thomaswanggg0@gmail.com" style="color:var(--primary)">thomaswanggg0@gmail.com</a></p>
     </div>
   </div>
 </div>
@@ -772,6 +873,11 @@ document.addEventListener('keydown',e=>{
     e.preventDefault();nextQ();
   }
 });
+
+// ── MODALS ──────────────────────────────────────────────────────────────────
+function openModal(id){$(id).classList.remove('hidden');document.body.style.overflow='hidden';}
+function closeModal(id){$(id).classList.add('hidden');document.body.style.overflow='';}
+function closeModalOutside(e,id){if(e.target.id===id)closeModal(id);}
 
 // ── INIT ────────────────────────────────────────────────────────────────────
 updateStatsBar();updateHero();
