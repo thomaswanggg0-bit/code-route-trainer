@@ -102,6 +102,27 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:.9re
 .rev-wrong{color:#dc2626}
 .rev-exp{font-size:.8rem;color:var(--muted);margin-top:.35rem;font-style:italic;line-height:1.4}
 .hidden{display:none!important}
+/* Theme filter */
+.theme-filter{margin-bottom:1.5rem}
+.themes-wrap{display:flex;flex-wrap:wrap;gap:.5rem}
+.theme-pill{padding:.35rem .85rem;border-radius:20px;border:2px solid var(--border);background:var(--card);cursor:pointer;font-size:.8rem;font-weight:600;color:var(--muted);transition:all .2s;user-select:none}
+.theme-pill:hover{border-color:var(--primary)}
+.theme-pill.sel{border-color:var(--primary);background:var(--tbg);color:var(--primary)}
+/* Cat stats */
+.cat-stats{margin-top:1.25rem;text-align:left}
+.cat-stat-row{margin-bottom:.75rem}
+.cat-stat-label{display:flex;justify-content:space-between;font-size:.82rem;font-weight:600;margin-bottom:.3rem}
+.cat-bar{height:8px;background:var(--border);border-radius:4px;overflow:hidden}
+.cat-bar-fill{height:100%;border-radius:4px;transition:width .6s}
+.cat-bar-fill.good{background:#16a34a}
+.cat-bar-fill.mid{background:#f59e0b}
+.cat-bar-fill.bad{background:#dc2626}
+/* Errors mode */
+#mode-errors{grid-column:1/-1}
+.mode-card.disabled{opacity:.45;cursor:not-allowed;pointer-events:none}
+/* Keyboard hint */
+.kbd-hint{text-align:center;font-size:.75rem;color:var(--muted);margin-top:.6rem}
+kbd{background:var(--border);border-radius:4px;padding:.1rem .35rem;font-size:.72rem;font-family:monospace;font-weight:700}
 @media(max-width:600px){
   .levels-grid{grid-template-columns:1fr}
   .modes-grid{grid-template-columns:1fr}
@@ -126,6 +147,7 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:.9re
       <div class="stat-pill">📚 <span>150</span> questions</div>
       <div class="stat-pill">🎯 Seuil examen <span>35/40</span></div>
       <div class="stat-pill">🏆 <span>3</span> niveaux</div>
+      <div class="stat-pill hidden" id="wrongPill">🔁 <span id="wrongCount">0</span> erreurs sauvegardées</div>
     </div>
     <div class="sec-label">Niveau</div>
     <div class="levels-grid">
@@ -158,6 +180,14 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:.9re
         <div class="mode-title">📝 Mode Examen</div>
         <div class="mode-desc">40 questions tirées au sort. Résultats et corrections uniquement à la fin. Seuil : 35/40.</div>
       </div>
+      <div class="mode-card disabled" id="mode-errors">
+        <div class="mode-title">🔁 Erreurs uniquement</div>
+        <div class="mode-desc" id="errorsDesc">Sélectionnez un niveau pour voir vos erreurs sauvegardées.</div>
+      </div>
+    </div>
+    <div class="theme-filter hidden" id="themeFilter">
+      <div class="sec-label">Thème <span style="font-size:.75rem;color:var(--muted);text-transform:none;letter-spacing:0">(optionnel)</span></div>
+      <div class="themes-wrap" id="themesWrap"></div>
     </div>
     <button class="start-btn" id="startBtn" onclick="startQuiz()" disabled>Choisir un niveau et un mode</button>
   </div>
@@ -176,6 +206,7 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:.9re
       <div class="choices" id="choicesWrap"></div>
       <div class="expl" id="expl"></div>
       <button class="next-btn" id="nextBtn" onclick="nextQ()">Question suivante →</button>
+      <div class="kbd-hint">Raccourcis : <kbd>A</kbd> <kbd>B</kbd> <kbd>C</kbd> <kbd>D</kbd> pour répondre · <kbd>Entrée</kbd> pour continuer</div>
     </div>
   </div>
 
@@ -193,6 +224,7 @@ header{background:var(--card);border-bottom:1px solid var(--border);padding:.9re
         <div class="rst ko"><div class="rst-n" id="stKo">0</div><div class="rst-l">Incorrectes</div></div>
         <div class="rst"><div class="rst-n" id="stPct">0%</div><div class="rst-l">Réussite</div></div>
       </div>
+      <div class="cat-stats" id="catStats"></div>
     </div>
     <div class="act-btns">
       <button class="act-btn primary" onclick="restartSame()">🔄 Recommencer</button>
@@ -377,8 +409,16 @@ e:[ // ── EXPERT ──
 // Fix the last expert question answer
 DB.e[DB.e.length-1] = {q:"Conduire malgré une suspension de permis est puni de :",choices:["1 an de prison et 15 000 €","2 ans de prison et 4 500 €","6 mois et 3 750 €","Amende forfaitaire uniquement"],a:1,cat:"Infractions",exp:"Conduire malgré une suspension est un délit : 2 ans de prison et 4 500 € d'amende (+ confiscation possible du véhicule). Attention : différent de la conduite sans avoir jamais eu le permis."};
 
+// ── LOCALSTORAGE ────────────────────────────────────────────────────────────
+const LS='cdrData';
+function ld(){try{return JSON.parse(localStorage.getItem(LS)||'{}')}catch{return{}}}
+function sd(d){localStorage.setItem(LS,JSON.stringify(d))}
+function getWrong(lv){return(ld().wrong||{})[lv]||[]}
+function addWrong(lv,qt){const d=ld();if(!d.wrong)d.wrong={};if(!d.wrong[lv])d.wrong[lv]=[];if(!d.wrong[lv].includes(qt))d.wrong[lv].push(qt);sd(d)}
+function clearCorrect(lv,cts){const d=ld();if(d.wrong&&d.wrong[lv])d.wrong[lv]=d.wrong[lv].filter(q=>!cts.includes(q));sd(d)}
+
 // ── STATE ──────────────────────────────────────────────────────────────────
-let curLevel='', curMode='', questions=[], curIdx=0, score=0, answered=false;
+let curLevel='', curMode='', curTheme='all', questions=[], curIdx=0, score=0, answered=false;
 let userAnswers=[];
 
 // ── UI HELPERS ─────────────────────────────────────────────────────────────
@@ -393,9 +433,10 @@ function toggleTheme(){
 }
 
 function selectLevel(l){
-  curLevel=l;
+  curLevel=l;curTheme='all';
   document.querySelectorAll('.level-card').forEach(c=>c.classList.remove('sel'));
   $('lvl-'+l).classList.add('sel');
+  updateThemeFilter();
   updateStart();
 }
 function selectMode(m){
@@ -403,6 +444,35 @@ function selectMode(m){
   document.querySelectorAll('.mode-card').forEach(c=>c.classList.remove('sel'));
   $('mode-'+m).classList.add('sel');
   updateStart();
+}
+function selectTheme(t){
+  curTheme=t;
+  document.querySelectorAll('.theme-pill').forEach(p=>p.classList.remove('sel'));
+  document.querySelectorAll('.theme-pill').forEach(p=>{if(p.dataset.cat===t)p.classList.add('sel');});
+}
+function updateThemeFilter(){
+  if(!curLevel){hide('themeFilter');return;}
+  const cats=[...new Set(DB[curLevel].map(q=>q.cat))].sort();
+  $('themesWrap').innerHTML=`<span class="theme-pill sel" onclick="selectTheme('all')" data-cat="all">Tous</span>`
+    +cats.map(c=>`<span class="theme-pill" onclick="selectTheme('${c.replace(/'/g,"\\'")}')" data-cat="${c}">${c}</span>`).join('');
+  const wrong=getWrong(curLevel);
+  const ec=$('mode-errors'),ed=$('errorsDesc');
+  if(wrong.length===0){
+    ec.classList.add('disabled');
+    ed.textContent='Aucune erreur sauvegardée pour ce niveau.';
+    if(curMode==='errors'){curMode='';document.querySelectorAll('.mode-card').forEach(c=>c.classList.remove('sel'));updateStart();}
+  } else {
+    ec.classList.remove('disabled');
+    ec.onclick=()=>selectMode('errors');
+    ed.textContent=`${wrong.length} question${wrong.length>1?'s':''} à reprendre.`;
+  }
+  show('themeFilter');
+}
+function updateStatsBar(){
+  let n=0;['d','i','e'].forEach(l=>n+=getWrong(l).length);
+  const p=$('wrongPill'),c=$('wrongCount');
+  if(n>0){if(c)c.textContent=n;if(p)p.classList.remove('hidden');}
+  else{if(p)p.classList.add('hidden');}
 }
 function updateStart(){
   const btn=$('startBtn');
@@ -414,9 +484,19 @@ function updateStart(){
 function shuffle(arr){for(let i=arr.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[arr[i],arr[j]]=[arr[j],arr[i]];}return arr;}
 
 function startQuiz(){
-  const pool=shuffle([...DB[curLevel]]);
-  questions=curMode==='exam'?pool.slice(0,40):pool;
-  curIdx=0;score=0;answered=false;userAnswers=[];
+  let pool;
+  if(curMode==='errors'){
+    const wt=getWrong(curLevel);
+    pool=DB[curLevel].filter(q=>wt.includes(q.q));
+    if(!pool.length){alert('Aucune erreur sauvegardée pour ce niveau.');return;}
+    pool=shuffle(pool);
+  } else {
+    pool=[...DB[curLevel]];
+    if(curTheme!=='all')pool=pool.filter(q=>q.cat===curTheme);
+    pool=shuffle(pool);
+    if(curMode==='exam')pool=pool.slice(0,Math.min(40,pool.length));
+  }
+  questions=pool;curIdx=0;score=0;answered=false;userAnswers=[];
   hide('homeScreen');show('quizScreen');
   renderQuestion();
 }
@@ -452,7 +532,12 @@ function answer(idx){
   btns[idx].classList.add(correct?'correct':'wrong');
   if(!correct)btns[q.a].classList.add('correct');
   userAnswers.push({q,userIdx:idx,correct});
-  if(curMode==='train'){
+  if(curLevel){
+    if(!correct)addWrong(curLevel,q.q);
+    else clearCorrect(curLevel,[q.q]);
+    updateStatsBar();
+  }
+  if(curMode==='train'||curMode==='errors'){
     const e=$('expl');
     e.innerHTML=`<strong>${correct?'✅ Correct !':'❌ Incorrect.'}</strong> ${q.exp}`;
     e.classList.add('show');
@@ -481,6 +566,20 @@ function showResults(){
   $('stOk').textContent=score;
   $('stKo').textContent=total-score;
   $('stPct').textContent=pct+'%';
+  // Cat stats
+  const cm={};
+  userAnswers.forEach(ua=>{
+    if(!cm[ua.q.cat])cm[ua.q.cat]={c:0,t:0};
+    cm[ua.q.cat].t++;if(ua.correct)cm[ua.q.cat].c++;
+  });
+  const catKeys=Object.keys(cm).sort();
+  $('catStats').innerHTML=catKeys.length>1
+    ?'<div style="font-weight:700;font-size:.9rem;margin-bottom:.75rem">📊 Par catégorie</div>'
+      +catKeys.map(cat=>{const{c,t}=cm[cat];const p=Math.round(c/t*100);const cl=p>=80?'good':p>=50?'mid':'bad';
+        return`<div class="cat-stat-row"><div class="cat-stat-label"><span>${cat}</span><span>${c}/${t} (${p}%)</span></div><div class="cat-bar"><div class="cat-bar-fill ${cl}" style="width:${p}%"></div></div></div>`;}).join('')
+    :'';
+  updateStatsBar();
+  if(curLevel)updateThemeFilter();
   // Review
   const wrap=$('reviewWrap');
   wrap.innerHTML=userAnswers.map((ua,i)=>{
@@ -514,6 +613,21 @@ function navigateHome(){
   }
   show('homeScreen');
 }
+
+// ── KEYBOARD ────────────────────────────────────────────────────────────────
+document.addEventListener('keydown',e=>{
+  if($('quizScreen').classList.contains('hidden'))return;
+  if(!answered){
+    const map={a:0,b:1,c:2,d:3,'1':0,'2':1,'3':2,'4':3};
+    const k=map[e.key.toLowerCase()];
+    if(k!==undefined)answer(k);
+  } else if(e.key==='Enter'||e.key===' '){
+    e.preventDefault();nextQ();
+  }
+});
+
+// ── INIT ────────────────────────────────────────────────────────────────────
+updateStatsBar();
 </script>
 </body>
 </html>
